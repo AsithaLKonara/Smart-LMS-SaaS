@@ -1,0 +1,409 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Status {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum RoleType {
+  SUPER_ADMIN
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Platform {
+  ZOOM
+  GOOGLE_MEET
+  MICROSOFT_TEAMS
+  OTHER
+}
+
+enum NotificationType {
+  COURSE_UPDATE
+  LIVE_CLASS
+  EXAM_REMINDER
+  ASSIGNMENT_DUE
+  GRADE_RELEASED
+  ACHIEVEMENT
+  SYSTEM
+}
+
+enum BadgeType {
+  FIRST_LESSON
+  COURSE_COMPLETE
+  WEEK_STREAK
+  MONTH_STREAK
+  PERFECT_SCORE
+  EARLY_BIRD
+  DEDICATED_LEARNER
+}
+
+// ============================================
+// TENANT & USER MODELS
+// ============================================
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  subdomain   String   @unique
+  logo        String?
+  accentColor String?  @default("#22D3EE")
+  plan        Plan     @default(FREE)
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users   User[]
+  courses Course[]
+  roles   Role[]
+
+  @@index([subdomain])
+  @@map("tenants")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  tenantId     String
+  email        String
+  name         String
+  password     String // Hashed
+  role         RoleType      @default(STUDENT)
+  avatar       String?
+  emailVerified DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments     Enrollment[]
+  examAttempts    ExamAttempt[]
+  submissions     Submission[]
+  aiChats         AIChat[]
+  notifications   Notification[]
+  badges          Badge[]
+  streak          Streak?
+  courses         Course[]        @relation("Instructor")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  tenantId   String
+  name       String
+  permissions Json // Array of permission strings
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+// ============================================
+// COURSE & LEARNING MODELS
+// ============================================
+
+model Course {
+  id           String        @id @default(cuid())
+  tenantId     String
+  instructorId String
+  title        String
+  description  String?
+  thumbnail    String?
+  status       CourseStatus  @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instructor  User          @relation("Instructor", fields: [instructorId], references: [id])
+  modules     Module[]
+  enrollments Enrollment[]
+  exams       Exam[]
+  assignments Assignment[]
+  liveClasses LiveClass[]
+  aiChats     AIChat[]
+
+  @@index([tenantId])
+  @@index([instructorId])
+  @@index([tenantId, status])
+  @@map("courses")
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  courseId String
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([courseId])
+  @@map("modules")
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  moduleId String
+  title     String
+  content   String?  // Rich text content
+  videoUrl  String?  // YouTube/Vimeo URL
+  duration  Int?     // Duration in seconds
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  module         Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+  aiChats        AIChat[]
+
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+// ============================================
+// ENROLLMENT & PROGRESS MODELS
+// ============================================
+
+model Enrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String
+  progress    Float     @default(0) // 0-100
+  completedAt DateTime?
+  enrolledAt  DateTime  @default(now())
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+model LessonProgress {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  lessonId     String
+  completed    Boolean  @default(false)
+  lastPosition Int      @default(0) // Video position in seconds
+  completedAt  DateTime?
+  updatedAt    DateTime @updatedAt
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson     Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+// ============================================
+// EXAM & ASSIGNMENT MODELS
+// ============================================
+
+model Exam {
+  id        String   @id @default(cuid())
+  courseId String
+  title     String
+  duration  Int      // Duration in minutes
+  questions Json     // Array of question objects
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  examAttempts ExamAttempt[]
+
+  @@index([courseId])
+  @@map("exams")
+}
+
+model ExamAttempt {
+  id         String    @id @default(cuid())
+  examId     String
+  userId     String
+  answers    Json      // User's answers
+  score      Float?
+  submittedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, userId])
+  @@index([examId])
+  @@index([userId])
+  @@map("exam_attempts")
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  @@index([courseId])
+  @@map("assignments")
+}
+
+model Submission {
+  id           String    @id @default(cuid())
+  assignmentId String
+  userId       String
+  content      String?   // Text submission
+  fileUrl      String?   // File upload URL
+  grade        Float?
+  feedback     String?
+  submittedAt  DateTime  @default(now())
+  gradedAt     DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
+  @@index([assignmentId])
+  @@index([userId])
+  @@map("submissions")
+}
+
+// ============================================
+// LIVE CLASSES MODEL
+// ============================================
+
+model LiveClass {
+  id          String   @id @default(cuid())
+  courseId    String
+  title       String
+  platform    Platform
+  meetingUrl  String
+  scheduledAt DateTime
+  duration    Int      // Duration in minutes
+  recordingUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([scheduledAt])
+  @@map("live_classes")
+}
+
+// ============================================
+// AI CHAT MODEL
+// ============================================
+
+model AIChat {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String?
+  lessonId  String?
+  messages  Json     // Array of chat messages
+  context   Json?    // Additional context
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("ai_chats")
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// ============================================
+// GAMIFICATION MODELS
+// ============================================
+
+model Badge {
+  id       String    @id @default(cuid())
+  userId   String
+  type     BadgeType
+  earnedAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("badges")
+}
+
+model Streak {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  currentStreak Int       @default(0)
+  longestStreak Int        @default(0)
+  lastActiveDate DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
