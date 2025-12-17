@@ -1,0 +1,3 @@
+// Re-export from config
+export { handlers, signIn, signOut, auth } from '@/lib/auth/config';
+

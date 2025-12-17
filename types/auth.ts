@@ -2,16 +2,42 @@
  * Authentication related types
  */
 
-export type RoleType = 'SUPER_ADMIN' | 'ADMIN' | 'INSTRUCTOR' | 'STUDENT';
+import type { RoleType } from '@prisma/client';
+import 'next-auth';
+import 'next-auth/jwt';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  role: RoleType;
-  tenantId: string;
-  avatar?: string;
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: RoleType;
+      tenantId: string;
+      avatar?: string;
+    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    role: RoleType;
+    tenantId: string;
+    avatar?: string;
+  }
 }
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    role: RoleType;
+    tenantId: string;
+    avatar?: string;
+  }
+}
+
+export type { RoleType };
 
 export interface LoginCredentials {
   email: string;
@@ -26,4 +52,3 @@ export interface RegisterInput {
   tenantId: string;
   role?: RoleType;
 }
-
