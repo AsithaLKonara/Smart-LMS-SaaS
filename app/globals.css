@@ -37,6 +37,7 @@
   
   /* Shadows */
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-card-3d: var(--shadow-card);
   --shadow-card-hover: 0 15px 40px rgba(0, 0, 0, 0.5);
 }
 
