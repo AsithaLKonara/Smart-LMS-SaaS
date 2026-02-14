@@ -120,3 +120,45 @@ export async function updateUser(
   });
 }
 
+/**
+ * Get students enrolled in courses taught by a specific instructor
+ */
+export async function getStudentsByInstructor(instructorId: string) {
+  return prisma.user.findMany({
+    where: {
+      enrollments: {
+        some: {
+          course: {
+            instructorId
+          }
+        }
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      createdAt: true,
+      enrollments: {
+        where: {
+          course: {
+            instructorId
+          }
+        },
+        include: {
+          course: {
+            select: {
+              title: true,
+              id: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      name: 'asc'
+    }
+  });
+}
+

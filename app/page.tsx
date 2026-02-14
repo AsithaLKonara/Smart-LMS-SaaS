@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Container } from '@/components/layout/Container';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -14,7 +15,9 @@ export default function Home() {
             AI-Powered Smart Learning Management System
           </p>
           <div className="flex gap-4 justify-center mb-16">
-            <Button size="lg">Get Started</Button>
+            <Link href="/login" className={buttonVariants({ size: 'lg' })}>
+              Get Started
+            </Link>
             <Button variant="outline" size="lg">Learn More</Button>
           </div>
         </div>

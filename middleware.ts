@@ -1,14 +1,34 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // Apply rate limiting to API routes
+  if (path.startsWith('/api') && !path.startsWith('/api/auth')) {
+    const ip = request.ip || '127.0.0.1';
+    const identifier = (await getToken({ req: request }))?.email || ip;
+    const result = await rateLimit(identifier, 100); // 100 requests per minute
+
+    if (!result.success) {
+      return new NextResponse('Too Many Requests', {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': result.limit.toString(),
+          'X-RateLimit-Remaining': result.remaining.toString(),
+        }
+      });
+    }
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const path = request.nextUrl.pathname;
+
 
   // Public routes - allow access
   const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];

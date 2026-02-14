@@ -62,6 +62,16 @@ export async function getCourseById(courseId: string, tenantId: string) {
           order: 'asc',
         },
       },
+      liveClasses: {
+        orderBy: {
+          scheduledAt: 'asc',
+        }
+      },
+      assignments: {
+        orderBy: {
+          dueDate: 'asc',
+        }
+      },
       _count: {
         select: {
           enrollments: true,

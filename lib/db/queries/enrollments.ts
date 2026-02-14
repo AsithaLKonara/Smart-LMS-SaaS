@@ -47,6 +47,7 @@ export async function getEnrollmentsByUser(userId: string) {
       userId,
     },
     include: {
+      lessonProgress: true,
       course: {
         include: {
           instructor: {
@@ -85,24 +86,7 @@ export async function createEnrollment(userId: string, courseId: string) {
   });
 }
 
-/**
- * Update enrollment progress
- */
-export async function updateEnrollmentProgress(
-  enrollmentId: string,
-  progress: number,
-  completedAt?: Date
-) {
-  return prisma.enrollment.update({
-    where: {
-      id: enrollmentId,
-    },
-    data: {
-      progress,
-      ...(completedAt && { completedAt }),
-    },
-  });
-}
+
 
 /**
  * Get lesson progress
@@ -118,6 +102,9 @@ export async function getLessonProgress(enrollmentId: string, lessonId: string) 
   });
 }
 
+import { awardBadge } from './gamification';
+import { BadgeType } from '@prisma/client';
+
 /**
  * Update lesson progress
  */
@@ -130,7 +117,7 @@ export async function updateLessonProgress(
     completedAt?: Date;
   }
 ) {
-  return prisma.lessonProgress.upsert({
+  const result = await prisma.lessonProgress.upsert({
     where: {
       enrollmentId_lessonId: {
         enrollmentId,
@@ -143,6 +130,61 @@ export async function updateLessonProgress(
       lessonId,
       ...data,
     },
+    include: {
+      enrollment: {
+        select: {
+          userId: true
+        }
+      }
+    }
   });
+
+  // Award First Lesson Badge if this is the first completion
+  if (data.completed) {
+    const completedCount = await prisma.lessonProgress.count({
+      where: {
+        enrollmentId,
+        completed: true
+      }
+    });
+
+    if (completedCount === 1) {
+      await awardBadge(result.enrollment.userId, BadgeType.FIRST_LESSON).catch(console.error);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Update enrollment progress
+ */
+export async function updateEnrollmentProgress(
+  enrollmentId: string,
+  progress: number,
+  completedAt?: Date
+) {
+  const enrollment = await prisma.enrollment.update({
+    where: {
+      id: enrollmentId,
+    },
+    data: {
+      progress,
+      ...(completedAt && { completedAt }),
+    },
+    include: {
+      course: {
+        select: {
+          title: true
+        }
+      }
+    }
+  });
+
+  if (progress === 100 || completedAt) {
+    await awardBadge(enrollment.userId, BadgeType.COURSE_COMPLETE).catch(console.error);
+  }
+
+  return enrollment;
 }
 

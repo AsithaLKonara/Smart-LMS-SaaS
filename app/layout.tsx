@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Modern, dark-themed Learning Management System with AI-powered tutoring, live classes, and comprehensive analytics",
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,6 +36,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <SessionProvider>{children}</SessionProvider>
+          <Toaster richColors theme="dark" position="top-right" />
         </ThemeProvider>
       </body>
     </html>
