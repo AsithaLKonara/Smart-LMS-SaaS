@@ -76,12 +76,14 @@ export async function updateExam(
             throw new Error("Unauthorized or Not Found");
         }
 
+        const { id, courseId: _, createdAt, updatedAt, ...updateValues } = values;
+
         const exam = await prisma.exam.update({
             where: {
                 id: examId,
             },
             data: {
-                ...values,
+                ...(updateValues as any),
             },
         });
 

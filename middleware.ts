@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
 
   // Apply rate limiting to API routes
   if (path.startsWith('/api') && !path.startsWith('/api/auth')) {
-    const ip = request.ip || '127.0.0.1';
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     const identifier = (await getToken({ req: request }))?.email || ip;
     const result = await rateLimit(identifier, 100); // 100 requests per minute
 

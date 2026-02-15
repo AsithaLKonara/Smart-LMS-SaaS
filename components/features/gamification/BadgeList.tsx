@@ -5,7 +5,7 @@ import { Award, CheckCircle2, Trophy, Zap, Star, Rocket, Target, BookOpen } from
 import { BadgeType } from "@prisma/client";
 import { cn } from "@/lib/utils/cn";
 import { format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 
 interface Badge {
     id: string;

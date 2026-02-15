@@ -13,16 +13,17 @@ interface OnboardingStep4Props {
     email: string;
     name: string;
   };
+  password: string;
 }
 
-export function OnboardingStep4({ tenantData, userData }: OnboardingStep4Props) {
+export function OnboardingStep4({ tenantData, userData, password }: OnboardingStep4Props) {
   const router = useRouter();
 
   const handleContinue = async () => {
     // Auto sign in the user
     await signIn('credentials', {
       email: userData.email,
-      password: '', // Password was already used in onboarding
+      password: password,
       redirect: true,
       callbackUrl: '/dashboard',
     });

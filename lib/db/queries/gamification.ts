@@ -22,7 +22,7 @@ export async function updateStreak(userId: string) {
         },
     });
 
-    const lastActive = startOfDay(streak.lastActiveDate);
+    const lastActive = streak.lastActiveDate ? startOfDay(streak.lastActiveDate) : new Date(0);
     const today = startOfDay(new Date());
 
     if (isToday(lastActive)) {
