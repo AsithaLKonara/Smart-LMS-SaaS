@@ -12,6 +12,7 @@ import { updateLesson } from "@/app/actions/courses";
 import { Button } from "@/components/ui/Button";
 import { Editor } from "@/components/ui/Editor";
 import { Preview } from "@/components/ui/Preview";
+import { cn } from "@/lib/utils/cn";
 
 interface LessonDescriptionFormProps {
     initialData: {
@@ -36,7 +37,7 @@ export const LessonDescriptionForm = ({
     const router = useRouter();
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             content: initialData.content || "",
         },

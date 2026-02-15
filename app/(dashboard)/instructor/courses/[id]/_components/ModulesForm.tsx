@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/cn";
 import { createModule, reorderModules, reorderLessons } from "@/app/actions/courses";
 import { ModuleList } from "./ModuleList";
 // import { toast } from "sonner";

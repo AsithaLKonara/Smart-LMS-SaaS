@@ -11,7 +11,7 @@ import {
 } from "@hello-pangea/dnd";
 import { Grip, Pencil, Trash, PlusCircle } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/cn";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Module, Lesson } from "@prisma/client";

@@ -156,6 +156,7 @@ export default async function LessonIdPage({
                                         initialData={lesson}
                                         courseId={courseId}
                                         lessonId={lessonId}
+                                        moduleId={lesson.module.id}
                                     />
                                 </CardContent>
                             </Card>
