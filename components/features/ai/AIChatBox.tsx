@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat, type Message } from "ai/react";
 import { useState } from "react";
 import { MessageSquare, X, Send, Bot } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -58,7 +58,7 @@ export const AIChatBox = () => {
                                 </p>
                             </div>
                         )}
-                        {messages.map((m) => (
+                        {messages.map((m: Message) => (
                             <div
                                 key={m.id}
                                 className={cn(

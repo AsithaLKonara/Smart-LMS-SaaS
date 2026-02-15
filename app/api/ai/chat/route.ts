@@ -1,14 +1,9 @@
-
-import { OpenAIStream, StreamingTextResponse } from "ai";
-import OpenAI from "openai";
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
 
 export const runtime = 'edge';
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(req: Request) {
     try {
@@ -21,20 +16,12 @@ export async function POST(req: Request) {
 
         const { messages } = await req.json();
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            stream: true,
-            messages: [
-                {
-                    role: "system",
-                    content: "You are a helpful AI assistant for the Smart LMS platform. You help students learn by answering questions about course content.",
-                },
-                ...messages,
-            ],
+        const result = await streamText({
+            model: openai("gpt-3.5-turbo") as any,
+            messages,
         });
 
-        const stream = OpenAIStream(response);
-        return new StreamingTextResponse(stream);
+        return result.toTextStreamResponse();
     } catch (error) {
         console.log("[AI_CHAT]", error);
         return new NextResponse("Internal Error", { status: 500 });
