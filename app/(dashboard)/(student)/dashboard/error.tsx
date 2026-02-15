@@ -39,7 +39,7 @@ export default function Error({
                     <div className="flex flex-col gap-2">
                         <Button
                             onClick={() => reset()}
-                            variant="default"
+                            variant="primary"
                             className="w-full gap-2"
                         >
                             <RotateCcw className="h-4 w-4" />

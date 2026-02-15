@@ -160,6 +160,7 @@ export default function RegisterPage() {
             <OnboardingStep4
               tenantData={completedData.tenant}
               userData={completedData.user}
+              password={onboardingData.adminPassword || ''}
             />
           )}
         </div>
