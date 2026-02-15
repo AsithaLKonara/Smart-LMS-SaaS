@@ -17,7 +17,9 @@ import {
     Underline as UnderlineIcon,
     Heading1,
     Heading2,
-    Code
+    Code,
+    Strikethrough,
+    Minus
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -59,6 +61,41 @@ const Toolbar = ({ editor }: { editor: any }) => {
                 className={cn("h-8 w-8", editor.isActive("underline") && "bg-white/10 text-accent-cyan")}
             >
                 <UnderlineIcon className="h-4 w-4" />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={cn("h-8 w-8", editor.isActive("strike") && "bg-white/10 text-accent-cyan")}
+            >
+                <Strikethrough className="h-4 w-4" />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                    const previousUrl = editor.getAttributes('link').href
+                    const url = window.prompt('URL', previousUrl)
+
+                    // cancelled
+                    if (url === null) {
+                        return
+                    }
+
+                    // empty
+                    if (url === '') {
+                        editor.chain().focus().extendMarkRange('link').unsetLink().run()
+                        return
+                    }
+
+                    // update
+                    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+                }}
+                className={cn("h-8 w-8", editor.isActive("link") && "bg-white/10 text-accent-cyan")}
+            >
+                <LinkIcon className="h-4 w-4" />
             </Button>
             <Button
                 type="button"
@@ -114,6 +151,15 @@ const Toolbar = ({ editor }: { editor: any }) => {
                 className={cn("h-8 w-8", editor.isActive("codeBlock") && "bg-white/10 text-accent-cyan")}
             >
                 <Code className="h-4 w-4" />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                className="h-8 w-8"
+            >
+                <Minus className="h-4 w-4" />
             </Button>
             <div className="w-[1px] h-8 bg-white/10 mx-1" />
             <Button
