@@ -18,17 +18,17 @@ This document tracks the final tasks required to bring the Smart LMS project to 
   - [x] In-app "Class Starting" toast notifications.
 
 ## 🔒 Block 4: Security & API Hardening
-- [ ] **Account Security**:
+- [x] **Account Security**:
   - [x] Password Change server action and UI.
   - [x] 2-Factor Authentication (placeholder/logic setup).
-- [ ] **API Standards**:
+- [x] **API Standards**:
   - [x] Rate limiting for all `/api/*` routes.
   - [x] OpenAPI/Swagger documentation generation.
 
 ## 🧪 Block 5: Quality Assurance & Performance
 - [x] **Unit Testing**: Setup Vitest and test critical business logic (enrollments, analytics).
-- [ ] **E2E Testing**: Setup Playwright and test critical user flows (Onboarding -> Course Completion).
-- [ ] **Performance**: 
+- [x] **E2E Testing**: Setup Playwright and test critical user flows (Onboarding -> Course Completion).
+- [x] **Performance**: 
   - [x] Verify Prisma indexes on all foreign keys.
   - [x] Add caching for heavy analytics queries.
 
@@ -38,4 +38,4 @@ This document tracks the final tasks required to bring the Smart LMS project to 
 - [x] **User Manuals**: Comprehensive guides for Instructors and Admins.
 
 ---
-*Last Updated: 2026-02-13*
+*Last Updated: 2026-02-15*
