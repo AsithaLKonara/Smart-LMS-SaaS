@@ -33,7 +33,7 @@ async function main() {
       tenantId: tenant.id,
       email: 'admin@demo.com',
       name: 'Admin User',
-      password: '$2a$10$placeholder', // This should be hashed in real implementation
+      password: '$2b$10$tQ0wNd37auGWDBvtbcP6fucyAc3iFzxS/c7OdqHJWil0E1CQDdhS2', // Password123!
       role: 'ADMIN',
     },
   });
@@ -53,7 +53,7 @@ async function main() {
       tenantId: tenant.id,
       email: 'instructor@demo.com',
       name: 'John Instructor',
-      password: '$2a$10$placeholder',
+      password: '$2b$10$tQ0wNd37auGWDBvtbcP6fucyAc3iFzxS/c7OdqHJWil0E1CQDdhS2', // Password123!
       role: 'INSTRUCTOR',
     },
   });
@@ -73,7 +73,7 @@ async function main() {
       tenantId: tenant.id,
       email: 'student@demo.com',
       name: 'Jane Student',
-      password: '$2a$10$placeholder',
+      password: '$2b$10$tQ0wNd37auGWDBvtbcP6fucyAc3iFzxS/c7OdqHJWil0E1CQDdhS2', // Password123!
       role: 'STUDENT',
     },
   });

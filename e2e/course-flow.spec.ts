@@ -9,13 +9,13 @@ test('tenant onboarding and dashboard access', async ({ page }) => {
     const uniqueId = Date.now().toString();
     await page.getByLabel('Organization Name').fill(`Test Org ${uniqueId}`);
     await page.getByLabel('Subdomain').fill(`test-${uniqueId}`);
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
 
     // --- Step 2: Admin Account ---
     await page.getByLabel('Full Name').fill('Test Admin');
     await page.getByLabel('Email').fill(`admin-${uniqueId}@example.com`);
     await page.getByLabel('Password').fill('Password123!');
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
 
     // --- Step 3: Plan Selection ---
     // Select Free Plan (assuming it's the default or selectable)
