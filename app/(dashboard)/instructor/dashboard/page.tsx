@@ -1,12 +1,19 @@
-
 import { auth } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import { getInstructorStats, getInstructorChartData } from "@/lib/db/queries/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Container } from "@/components/layout/Container";
-import { BookOpen, DollarSign, Users, Star } from "lucide-react";
+import { KPIStrip } from "@/components/dashboard/KPIStrip";
+import {
+    BookOpen,
+    DollarSign,
+    Users,
+    Star,
+    TrendingUp,
+    Activity
+} from "lucide-react";
 import { EnrollmentChart } from "@/components/features/analytics/EnrollmentChart";
 import { RevenueChart } from "@/components/features/analytics/RevenueChart";
+import { TextGradient } from "@/components/ui/TextGradient";
+import { motion } from "framer-motion";
 
 export default async function InstructorDashboardPage() {
     const session = await auth();
@@ -20,76 +27,69 @@ export default async function InstructorDashboardPage() {
     const chartData = await getInstructorChartData(userId);
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
-            <Container className="py-8">
-                <h1 className="text-3xl font-bold text-text-primary mb-8">
-                    Instructor Dashboard
-                </h1>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <Card variant="elevated">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-text-secondary">
-                                Total Revenue
-                            </CardTitle>
-                            <DollarSign className="h-4 w-4 text-accent-cyan" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-text-primary">
-                                ${totalRevenue.toLocaleString()}
-                            </div>
-                            <p className="text-xs text-text-muted mt-1">+20.1% from last month</p>
-                        </CardContent>
-                    </Card>
-                    <Card variant="elevated">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-text-secondary">
-                                Enrolled Students
-                            </CardTitle>
-                            <Users className="h-4 w-4 text-accent-purple" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-text-primary">
-                                {totalStudents.toLocaleString()}
-                            </div>
-                            <p className="text-xs text-text-muted mt-1">+180 new students</p>
-                        </CardContent>
-                    </Card>
-                    <Card variant="elevated">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-text-secondary">
-                                Active Courses
-                            </CardTitle>
-                            <BookOpen className="h-4 w-4 text-orange-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-text-primary">
-                                {totalCourses.toLocaleString()}
-                            </div>
-                            <p className="text-xs text-text-muted mt-1">+2 new this month</p>
-                        </CardContent>
-                    </Card>
-                    <Card variant="elevated">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-text-secondary">
-                                Average Rating
-                            </CardTitle>
-                            <Star className="h-4 w-4 text-yellow-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-text-primary">
-                                {averageRating}
-                            </div>
-                            <p className="text-xs text-text-muted mt-1">Based on 124 reviews</p>
-                        </CardContent>
-                    </Card>
+        <div className="flex flex-col gap-10">
+            {/* Header section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-heading tracking-tight mb-2">
+                        Instructor <TextGradient>Power-up</TextGradient>
+                    </h1>
+                    <p className="text-text-secondary text-lg">
+                        Your courses are reaching new heights. Here's your performance breakdown.
+                    </p>
                 </div>
+                <div className="flex items-center gap-4">
+                    <div className="glass-dark border border-white/5 px-4 py-2 rounded-xl flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-xs font-bold text-text-primary uppercase tracking-wider">Live Stats</span>
+                    </div>
+                </div>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <KPIStrip items={[
+                {
+                    label: 'Total Revenue',
+                    value: `$${totalRevenue.toLocaleString()}`,
+                    icon: DollarSign,
+                    color: 'cyan',
+                    change: { value: '+$1,240', trend: 'up' }
+                },
+                {
+                    label: 'Active Students',
+                    value: totalStudents.toLocaleString(),
+                    icon: Users,
+                    color: 'purple',
+                    change: { value: '+180', trend: 'up' }
+                },
+                {
+                    label: 'Published Courses',
+                    value: totalCourses,
+                    icon: BookOpen,
+                    color: 'orange'
+                },
+                {
+                    label: 'Course Rating',
+                    value: averageRating,
+                    icon: Star,
+                    color: 'green',
+                    change: { value: '4.9/5', trend: 'up' }
+                }
+            ]} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="glass border border-white/5 rounded-3xl p-6 shadow-premium overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                        <TrendingUp className="w-32 h-32" />
+                    </div>
                     <RevenueChart data={chartData} />
+                </div>
+                <div className="glass border border-white/5 rounded-3xl p-6 shadow-premium overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                        <Activity className="w-32 h-32" />
+                    </div>
                     <EnrollmentChart data={chartData} />
                 </div>
-            </Container>
+            </div>
         </div>
     );
 }

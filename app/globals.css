@@ -22,23 +22,33 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  
+
   /* Fonts */
   --font-sans: var(--font-inter);
   --font-heading: var(--font-space-grotesk);
-  
+
   /* Spacing */
   --spacing-card: 1rem;
   --spacing-section: 3rem;
-  
+
   /* Border Radius */
   --radius-card: 1rem;
   --radius-button: 0.5rem;
-  
+
+  /* Premium Gradients */
+  --color-grad-primary: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%);
+  --color-grad-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+
   /* Shadows */
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --shadow-card-3d: var(--shadow-card);
   --shadow-card-hover: 0 15px 40px rgba(0, 0, 0, 0.5);
+  --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-neon-cyan: 0 0 20px rgba(34, 211, 238, 0.3);
+  --shadow-neon-purple: 0 0 20px rgba(168, 85, 247, 0.3);
+
+  /* Layout */
+  --width-sidebar: 280px;
+  --height-topbar: 64px;
 }
 
 /* Base Styles */
@@ -52,7 +62,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-space-grotesk), sans-serif;
   line-height: 1.2;
   font-weight: 600;
@@ -70,12 +85,66 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .glass-dark {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Glass Variants */
+.glass-xl {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-2xl {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Border Variants */
+.glass-border-5 {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-border-10 {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-border-20 {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Glass Hover States */
+.glass-hover {
+  transition: all 0.3s ease-out;
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.glass-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.glass-hover-glow-cyan:hover {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
+.glass-hover-glow-purple:hover {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
 }
 
 /* Scrollbar Styling */
@@ -102,6 +171,7 @@ h1, h2, h3, h4, h5, h6 {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -112,6 +182,7 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -123,6 +194,7 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);

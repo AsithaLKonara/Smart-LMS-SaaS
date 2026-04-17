@@ -25,7 +25,7 @@ export default async function ProfilePage() {
     return (
         <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
             <Container className="py-8">
-                <h1 className="text-3xl font-bold text-text-primary mb-8">Account Settings</h1>
+                <h1 className="text-3xl font-bold text-text-primary mb-8 font-heading">Account Settings</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Form */}
@@ -38,7 +38,7 @@ export default async function ProfilePage() {
                             }}
                         />
 
-                        <Card variant="elevated">
+                        <Card variant="glass" className="glass-hover">
                             <CardHeader>
                                 <CardTitle>Security</CardTitle>
                             </CardHeader>
@@ -56,7 +56,7 @@ export default async function ProfilePage() {
 
                     {/* Sidebar Settings */}
                     <div className="space-y-8">
-                        <Card variant="elevated">
+                        <Card variant="glass-dark" className="glass-hover">
                             <CardHeader>
                                 <CardTitle className="text-lg">Preferences</CardTitle>
                             </CardHeader>
@@ -83,7 +83,7 @@ export default async function ProfilePage() {
                             </CardContent>
                         </Card>
 
-                        <Card variant="elevated">
+                        <Card variant="glass-dark" className="glass-hover">
                             <CardHeader>
                                 <CardTitle className="text-lg">Account Type</CardTitle>
                             </CardHeader>

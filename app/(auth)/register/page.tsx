@@ -12,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { tenantOnboardingSchema, type TenantOnboardingInput } from '@/lib/validation/auth';
 import type { Plan } from '@prisma/client';
 import Link from 'next/link';
+import { TextGradient } from '@/components/ui/TextGradient';
+import { ArrowLeft, ChevronRight, ChevronLeft, Rocket } from 'lucide-react';
 
 const steps = ['Organization', 'Admin Account', 'Plan', 'Complete'];
 
@@ -115,8 +117,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card variant="elevated" className="w-full max-w-4xl mx-auto">
-      <CardContent className="p-8">
+    <Card className="glass border-white/10 shadow-premium w-full max-w-2xl mx-auto overflow-hidden">
+      <CardContent className="p-8 md:p-12">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold font-heading mb-2">Create your <TextGradient>Academy</TextGradient></h1>
+          <p className="text-text-secondary text-sm">Join 1,000+ organizations scaling with SmartLMS</p>
+        </div>
+
         <Stepper currentStep={currentStep} totalSteps={steps.length} steps={steps} />
 
         <div className="mt-8 min-h-[400px]">
@@ -172,16 +179,26 @@ export default function RegisterPage() {
         )}
 
         {currentStep < 4 && (
-          <div className="mt-8 flex justify-between">
+          <div className="mt-12 flex justify-between gap-4">
             <Button
               variant="ghost"
+              size="lg"
+              className="flex-1 h-12 rounded-xl group"
               onClick={handleBack}
               disabled={currentStep === 1 || loading}
             >
+              <ChevronLeft className="mr-2 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back
             </Button>
-            <Button onClick={handleNext} loading={loading}>
-              {currentStep === 3 ? 'Complete Setup' : 'Next'}
+            <Button
+              onClick={handleNext}
+              loading={loading}
+              variant="premium"
+              size="lg"
+              className="flex-[2] h-12 rounded-xl group"
+            >
+              {currentStep === 3 ? 'Launch Academy' : 'Continue'}
+              <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
         )}

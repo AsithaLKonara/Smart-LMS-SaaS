@@ -1,8 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/utils/cn';
 import type { Plan } from '@prisma/client';
+import { Check, Sparkles, Zap, Building } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface OnboardingStep3Props {
   selectedPlan: Plan;
@@ -14,7 +16,8 @@ const plans = [
     id: 'FREE' as Plan,
     name: 'Free',
     price: '$0',
-    period: 'forever',
+    period: 'mo',
+    icon: Zap,
     features: [
       'Up to 50 students',
       '5 courses',
@@ -26,14 +29,15 @@ const plans = [
     id: 'PRO' as Plan,
     name: 'Pro',
     price: '$99',
-    period: 'per month',
+    period: 'mo',
+    icon: Sparkles,
     features: [
       'Unlimited students',
       'Unlimited courses',
-      'Advanced analytics',
-      'AI-powered tutoring',
+      'Advanced AI Tutor',
       'Priority support',
       'Custom branding',
+      'Custom domain',
     ],
     popular: true,
   },
@@ -42,82 +46,91 @@ const plans = [
     name: 'Enterprise',
     price: 'Custom',
     period: '',
+    icon: Building,
     features: [
       'Everything in Pro',
-      'Dedicated support',
+      'SLA Guarantee',
       'Custom integrations',
-      'SLA guarantee',
+      'Dedicated Manager',
       'On-premise option',
-      'Training & onboarding',
+      'SSO / SAML',
     ],
   },
 ];
 
 export function OnboardingStep3({ selectedPlan, onSelectPlan }: OnboardingStep3Props) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-text-primary mb-2">
-          Choose Your Plan
-        </h2>
-        <p className="text-text-secondary">
-          Select the plan that best fits your needs. You can upgrade later.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-4">
-        {plans.map((plan) => (
-          <Card
+    <div className="space-y-8 py-4">
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((plan, i) => (
+          <motion.div
             key={plan.id}
-            variant={plan.popular ? 'elevated' : 'default'}
-            interactive
-            className={cn(
-              'cursor-pointer transition-all',
-              selectedPlan === plan.id && 'ring-2 ring-accent-cyan',
-              plan.popular && 'border-accent-cyan'
-            )}
-            onClick={() => onSelectPlan(plan.id)}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="flex"
           >
-            <CardHeader>
-              {plan.popular && (
-                <span className="text-xs font-semibold text-accent-cyan mb-2">
-                  MOST POPULAR
-                </span>
+            <Card
+              className={cn(
+                'group relative flex-1 glass border transition-all duration-300 overflow-hidden flex flex-col',
+                selectedPlan === plan.id
+                  ? 'border-accent-cyan shadow-neon-cyan ring-1 ring-accent-cyan/20'
+                  : 'border-white/5 hover:border-white/20',
+                plan.popular && 'border-accent-purple/50'
               )}
-              <CardTitle>{plan.name}</CardTitle>
-              <div className="mt-2">
-                <span className="text-3xl font-bold text-text-primary">{plan.price}</span>
-                {plan.period && (
-                  <span className="text-text-secondary ml-2">/{plan.period}</span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start text-sm text-text-secondary">
-                    <svg
-                      className="w-5 h-5 text-accent-cyan mr-2 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+              onClick={() => onSelectPlan(plan.id)}
+            >
+              {/* Background Glow for Selected */}
+              {selectedPlan === plan.id && (
+                <div className="absolute inset-0 bg-accent-cyan/5 -z-10" />
+              )}
+
+              <CardHeader className="p-6 border-b border-white/5 pb-6">
+                <div className="flex items-start justify-between">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors",
+                    selectedPlan === plan.id ? "bg-accent-cyan text-background-primary" : "bg-white/5 text-text-muted"
+                  )}>
+                    <plan.icon className="w-5 h-5" />
+                  </div>
+                  {plan.popular && (
+                    <span className="text-[10px] font-bold text-accent-purple bg-accent-purple/10 px-2 py-1 rounded-full border border-accent-purple/20">
+                      POPULAR
+                    </span>
+                  )}
+                </div>
+
+                <CardTitle className="text-xl font-heading mb-1">{plan.name}</CardTitle>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-text-primary tracking-tight">{plan.price}</span>
+                  {plan.period && (
+                    <span className="text-text-muted text-xs font-medium">/{plan.period}</span>
+                  )}
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-6 flex-1 flex flex-col justify-between gap-6">
+                <ul className="space-y-4">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-3 text-xs font-medium text-text-secondary">
+                      <div className={cn(
+                        "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                        selectedPlan === plan.id ? "bg-accent-cyan/20" : "bg-white/5"
+                      )}>
+                        <Check className={cn(
+                          "w-3 h-3",
+                          selectedPlan === plan.id ? "text-accent-cyan" : "text-text-muted"
+                        )} />
+                      </div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
     </div>
   );
 }
-

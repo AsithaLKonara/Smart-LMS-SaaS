@@ -10,6 +10,7 @@ const cardVariants = cva(
         default: 'bg-background-card border border-white/10 shadow-card-3d',
         elevated: 'bg-background-card border border-white/10 shadow-card-3d hover:shadow-card-hover',
         glass: 'glass border border-white/10',
+        'glass-dark': 'glass-dark border border-white/10',
       },
       interactive: {
         true: 'cursor-pointer hover:-translate-y-1',

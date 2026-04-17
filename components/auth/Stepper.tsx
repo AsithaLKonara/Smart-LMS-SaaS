@@ -1,6 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils/cn';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 
 interface StepperProps {
   currentStep: number;
@@ -11,7 +13,7 @@ interface StepperProps {
 export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-12">
         {steps.map((step, index) => {
           const stepNumber = index + 1;
           const isActive = stepNumber === currentStep;
@@ -20,52 +22,52 @@ export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
 
           return (
             <div key={step} className="flex items-center flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <div
+              <div className="flex flex-col items-center flex-1 relative">
+                <motion.div
+                  initial={false}
+                  animate={{
+                    backgroundColor: isCompleted || isActive ? 'var(--accent-cyan)' : 'transparent',
+                    borderColor: isCompleted || isActive ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)',
+                  }}
                   className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all',
-                    isCompleted &&
-                      'bg-accent-cyan text-background-primary border-2 border-accent-cyan',
-                    isActive &&
-                      'bg-accent-cyan text-background-primary border-2 border-accent-cyan ring-4 ring-accent-cyan/20',
-                    isUpcoming &&
-                      'bg-background-secondary text-text-secondary border-2 border-white/10'
+                    'w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm transition-all border-2 z-10',
+                    isCompleted || isActive ? 'text-background-primary shadow-neon-cyan' : 'text-text-muted',
+                    isActive && 'scale-110'
                   )}
                 >
                   {isCompleted ? (
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    <Check className="w-6 h-6 stroke-[3px]" />
                   ) : (
-                    stepNumber
+                    <span className="font-heading">{stepNumber}</span>
                   )}
-                </div>
+
+                  {isActive && (
+                    <motion.div
+                      layoutId="stepper-glow"
+                      className="absolute inset-0 rounded-2xl bg-accent-cyan/20 blur-xl -z-10"
+                    />
+                  )}
+                </motion.div>
+
                 <span
                   className={cn(
-                    'mt-2 text-xs text-center max-w-[80px]',
-                    isActive ? 'text-accent-cyan font-medium' : 'text-text-secondary'
+                    'absolute -bottom-8 text-[10px] font-bold uppercase tracking-widest text-center whitespace-nowrap transition-colors duration-300',
+                    isActive ? 'text-accent-cyan' : 'text-text-muted'
                   )}
                 >
                   {step}
                 </span>
               </div>
+
               {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    'flex-1 h-0.5 mx-2 transition-colors',
-                    isCompleted ? 'bg-accent-cyan' : 'bg-white/10'
-                  )}
-                />
+                <div className="flex-1 h-[2px] bg-white/5 mx-4 relative overflow-hidden">
+                  <motion.div
+                    initial={false}
+                    animate={{ width: isCompleted ? '100%' : '0%' }}
+                    className="absolute inset-0 bg-accent-cyan shadow-neon-cyan"
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
               )}
             </div>
           );
@@ -74,4 +76,3 @@ export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
     </div>
   );
 }
-

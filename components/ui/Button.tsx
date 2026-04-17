@@ -10,6 +10,8 @@ const buttonVariants = cva(
             variant: {
                 primary: 'bg-accent-cyan text-background-primary hover:bg-accent-cyan/90 active:scale-95',
                 secondary: 'bg-accent-purple text-white hover:bg-accent-purple/90 active:scale-95',
+                premium: 'bg-grad-primary text-white border-none shadow-premium hover:shadow-neon-purple active:scale-95',
+                glass: 'glass-light border border-white/10 text-white hover:bg-white/5 active:scale-95',
                 outline: 'border-2 border-accent-cyan text-accent-cyan hover:bg-accent-cyan/10 active:scale-95',
                 ghost: 'text-text-primary hover:bg-background-card active:scale-95',
                 danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-95',

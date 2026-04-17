@@ -53,7 +53,7 @@ export default async function AssignmentsPage({
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to course setup
                         </Link>
-                        <h1 className="text-2xl font-medium text-text-primary">
+                        <h1 className="text-2xl font-medium text-text-primary font-heading">
                             Assignments for {course.title}
                         </h1>
                     </div>
@@ -74,7 +74,7 @@ export default async function AssignmentsPage({
                     {course.assignments.map((assignment) => (
                         <div
                             key={assignment.id}
-                            className="flex items-center justify-between p-4 border border-white/10 rounded-md bg-background-elevated"
+                            className="flex items-center justify-between p-4 glass border-white/10 rounded-lg glass-hover"
                         >
                             <div className="flex items-center gap-x-4">
                                 <div className="p-2 rounded-full bg-green-500/10">

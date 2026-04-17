@@ -8,11 +8,25 @@ import { Container } from '@/components/layout/Container';
 import Link from 'next/link';
 import { formatDistanceToNow, format } from 'date-fns';
 import { prisma } from '@/lib/db/prisma';
-import { Video, Calendar, Sparkles, BookOpen, Search, Clock, GraduationCap } from 'lucide-react';
+import {
+  Video,
+  Calendar,
+  Sparkles,
+  BookOpen,
+  Search,
+  Clock,
+  GraduationCap,
+  Activity,
+  Trophy,
+  Zap
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getStreak, getBadges } from '@/lib/db/queries/gamification';
 import { StreakCounter } from '@/components/features/gamification/StreakCounter';
 import { BadgeList } from '@/components/features/gamification/BadgeList';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { KPIStrip } from '@/components/dashboard/KPIStrip';
+import { TextGradient } from '@/components/ui/TextGradient';
 
 export default async function StudentDashboardPage() {
   const session = await auth();
@@ -75,19 +89,58 @@ export default async function StudentDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
-      <Container className="py-8">
+      <div className="flex flex-col gap-10">
         {/* Welcome Section */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2">
-              Welcome back, {session.user.name}!
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-2"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-heading tracking-tight">
+              Welcome back, <TextGradient>{session.user.name}</TextGradient>!
             </h1>
-            <p className="text-text-secondary">
-              Continue your learning journey
+            <p className="text-text-secondary text-lg">
+              You're doing great! Here's what's happening with your learning today.
             </p>
+          </motion.div>
+          <div className="flex items-center gap-4">
+            <StreakCounter count={streak?.currentStreak || 0} />
+            <Button variant="premium" size="sm" className="hidden border-none md:flex shadow-neon-purple">
+              Daily Challenge
+            </Button>
           </div>
-          <StreakCounter count={streak?.currentStreak || 0} />
         </div>
+
+        {/* KPI Stats */}
+        <KPIStrip items={[
+          {
+            label: 'In Progress',
+            value: coursesInProgress,
+            icon: Activity,
+            color: 'cyan',
+            change: { value: '+2 this week', trend: 'up' }
+          },
+          {
+            label: 'Completed',
+            value: completedCourses,
+            icon: Trophy,
+            color: 'purple'
+          },
+          {
+            label: 'Avg. Progress',
+            value: `${Math.round(totalProgress)}%`,
+            icon: GraduationCap,
+            color: 'green',
+            change: { value: 'Steady', trend: 'up' }
+          },
+          {
+            label: 'Study Time',
+            value: formatStudyTime(totalStudySeconds),
+            icon: Clock,
+            color: 'orange'
+          }
+        ]} />
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -166,48 +219,6 @@ export default async function StudentDashboardPage() {
           </Card>
         )}
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle className="text-lg">Courses in Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent-cyan">{coursesInProgress}</div>
-            </CardContent>
-          </Card>
-
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle className="text-lg">Completed Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent-purple">{completedCourses}</div>
-            </CardContent>
-          </Card>
-
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle className="text-lg">Average Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-text-primary">
-                {Math.round(totalProgress)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle className="text-lg">Total Study Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent-cyan">
-                {formatStudyTime(totalStudySeconds)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* My Courses */}
         <div className="mb-8">
@@ -310,8 +321,7 @@ export default async function StudentDashboardPage() {
           </div>
           <BadgeList badges={badges as any} />
         </div>
-      </Container>
+      </div>
     </div>
   );
 }
-

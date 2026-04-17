@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/layout/Container';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 
 export default async function CoursesPage() {
   const session = await auth();
@@ -33,7 +34,7 @@ export default async function CoursesPage() {
     <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
       <Container className="py-8">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2 font-heading">
             Courses
           </h1>
           <p className="text-text-secondary">
@@ -41,13 +42,16 @@ export default async function CoursesPage() {
           </p>
         </div>
 
-        {/* Search and Filter (placeholder for future) */}
+        {/* Search and Filter */}
         <div className="mb-8">
-          <Input
-            placeholder="Search courses..."
-            className="max-w-md"
-            disabled
-          />
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <Input
+              placeholder="Search courses..."
+              className="pl-10 glass border-white/10"
+              disabled
+            />
+          </div>
         </div>
 
         {/* Enrolled Courses */}
@@ -60,10 +64,10 @@ export default async function CoursesPage() {
               {enrolledCourses.map((course) => {
                 const enrollment = enrollments.find((e) => e.courseId === course.id);
                 return (
-                  <Card key={course.id} variant="elevated" interactive>
+                  <Card key={course.id} variant="glass" className="glass-hover glass-hover-glow-cyan">
                     <CardHeader>
-                      <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="line-clamp-2 text-text-primary">{course.title}</CardTitle>
+                      <CardDescription className="text-text-secondary">
                         by {course.instructor.name} • {course._count.enrollments} students
                       </CardDescription>
                     </CardHeader>
@@ -77,7 +81,7 @@ export default async function CoursesPage() {
                             <span>Progress</span>
                             <span>{Math.round(enrollment.progress)}%</span>
                           </div>
-                          <div className="w-full bg-background-secondary rounded-full h-2">
+                          <div className="w-full bg-background-secondary rounded-full h-2 glass-border-10">
                             <div
                               className="bg-accent-cyan h-2 rounded-full transition-all"
                               style={{ width: `${enrollment.progress}%` }}
@@ -86,7 +90,7 @@ export default async function CoursesPage() {
                         </div>
                       )}
                       <Link href={`/courses/${course.id}`}>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full glass-border-10">
                           {enrollment && enrollment.progress > 0
                             ? 'Continue Learning'
                             : 'Start Course'}
@@ -118,10 +122,10 @@ export default async function CoursesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {availableCourses.map((course) => (
-                <Card key={course.id} variant="elevated" interactive>
+                <Card key={course.id} variant="glass" className="glass-hover glass-hover-glow-purple">
                   <CardHeader>
-                    <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="line-clamp-2 text-text-primary">{course.title}</CardTitle>
+                    <CardDescription className="text-text-secondary">
                       by {course.instructor.name} • {course._count.enrollments} students
                     </CardDescription>
                   </CardHeader>

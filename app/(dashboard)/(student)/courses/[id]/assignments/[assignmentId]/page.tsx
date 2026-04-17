@@ -61,7 +61,7 @@ export default async function AssignmentSubmissionPage({
                         {/* Assignment Details */}
                         <div className="md:col-span-2 space-y-6">
                             <div>
-                                <h1 className="text-3xl font-bold text-text-primary mb-4">
+                                <h1 className="text-3xl font-bold text-text-primary mb-4 font-heading">
                                     {assignment.title}
                                 </h1>
                                 {assignment.description && (
@@ -87,7 +87,7 @@ export default async function AssignmentSubmissionPage({
 
                         {/* Sidebar: Info */}
                         <div className="md:col-span-1">
-                            <Card variant="elevated" className="sticky top-8">
+                            <Card variant="glass-dark" className="sticky top-8 glass-hover">
                                 <CardContent className="p-6 space-y-4">
                                     <div>
                                         <span className="text-xs font-medium text-text-secondary block mb-1">DUE DATE</span>

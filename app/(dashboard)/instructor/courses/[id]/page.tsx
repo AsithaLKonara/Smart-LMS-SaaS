@@ -78,7 +78,7 @@ export default async function CourseIdPage({
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to courses
                         </Link>
-                        <h1 className="text-2xl font-medium text-text-primary">
+                        <h1 className="text-2xl font-medium text-text-primary font-heading">
                             Course Setup
                         </h1>
                         <span className="text-sm text-text-secondary">
@@ -109,7 +109,7 @@ export default async function CourseIdPage({
                             </h2>
                         </div>
 
-                        <Card variant="default" className="bg-background-elevated">
+                        <Card variant="glass" className="glass-hover">
                             <CardHeader>
                                 <CardTitle>Course Details</CardTitle>
                             </CardHeader>
@@ -132,7 +132,7 @@ export default async function CourseIdPage({
                                 </h2>
                             </div>
 
-                            <Card variant="default" className="bg-background-elevated">
+                            <Card variant="glass" className="glass-hover">
                                 <CardContent className="pt-6">
                                     <ModulesForm initialData={course} courseId={course.id} />
                                 </CardContent>
@@ -149,11 +149,11 @@ export default async function CourseIdPage({
                                 </h2>
                             </div>
 
-                            <Card variant="default" className="bg-background-elevated">
+                            <Card variant="glass" className="glass-hover">
                                 <CardContent className="p-6 space-y-4">
                                     <Link
                                         href={`/instructor/courses/${course.id}/live`}
-                                        className="flex items-center justify-between p-3 border border-white/10 rounded-md hover:bg-background-secondary transition-colors group"
+                                        className="flex items-center justify-between p-3 glass-light border-white/10 rounded-lg hover:border-white/20 transition-colors group glass-hover"
                                     >
                                         <div className="flex items-center gap-x-2">
                                             <Video className="h-4 w-4 text-accent-cyan" />
@@ -163,7 +163,7 @@ export default async function CourseIdPage({
                                     </Link>
                                     <Link
                                         href={`/instructor/courses/${course.id}/exams`}
-                                        className="flex items-center justify-between p-3 border border-white/10 rounded-md hover:bg-background-secondary transition-colors group"
+                                        className="flex items-center justify-between p-3 glass-light border-white/10 rounded-lg hover:border-white/20 transition-colors group glass-hover"
                                     >
                                         <div className="flex items-center gap-x-2">
                                             <ListChecks className="h-4 w-4 text-accent-purple" />
@@ -173,7 +173,7 @@ export default async function CourseIdPage({
                                     </Link>
                                     <Link
                                         href={`/instructor/courses/${course.id}/assignments`}
-                                        className="flex items-center justify-between p-3 border border-white/10 rounded-md hover:bg-background-secondary transition-colors group"
+                                        className="flex items-center justify-between p-3 glass-light border-white/10 rounded-lg hover:border-white/20 transition-colors group glass-hover"
                                     >
                                         <div className="flex items-center gap-x-2">
                                             <LayoutDashboard className="h-4 w-4 text-green-400" />

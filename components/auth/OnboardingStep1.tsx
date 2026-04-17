@@ -1,7 +1,8 @@
 'use client';
 
-import { Input } from '@/components/ui/Input';
 import { useState, useEffect } from 'react';
+import { Building2, Globe, Check, Loader2, X } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 
 interface OnboardingStep1Props {
   data: {
@@ -48,48 +49,83 @@ export function OnboardingStep1({ data, onChange, errors }: OnboardingStep1Props
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-text-primary mb-2">
-          Organization Details
-        </h2>
-        <p className="text-text-secondary">
-          Let's start by setting up your organization
-        </p>
-      </div>
-
-      <Input
-        label="Organization Name"
-        placeholder="Acme University"
-        value={data.organizationName}
-        onChange={(e) => onChange({ ...data, organizationName: e.target.value })}
-        error={errors?.organizationName}
-        required
-      />
-
-      <div>
-        <Input
-          label="Subdomain"
-          placeholder="acme"
-          value={data.subdomain}
-          onChange={(e) => handleSubdomainChange(e.target.value)}
-          error={errors?.subdomain}
-          helperText="This will be your unique URL: acme.smartlms.com"
-          required
-        />
-        {data.subdomain.length >= 3 && (
-          <div className="mt-2">
-            {checking ? (
-              <p className="text-sm text-text-secondary">Checking availability...</p>
-            ) : subdomainAvailable === true ? (
-              <p className="text-sm text-green-500">✓ Subdomain is available</p>
-            ) : subdomainAvailable === false ? (
-              <p className="text-sm text-red-500">✗ Subdomain is already taken</p>
-            ) : null}
+    <div className="space-y-8 py-4">
+      <div className="space-y-6">
+        {/* Organization Name */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Organization Name</label>
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent-cyan transition-colors">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              placeholder="Acme University"
+              className={cn(
+                "w-full h-12 glass-dark border rounded-xl pl-11 pr-4 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-white/10 transition-all font-medium",
+                errors?.organizationName ? "border-red-500/50" : "border-white/5 focus:border-accent-cyan/30"
+              )}
+              value={data.organizationName}
+              onChange={(e) => onChange({ ...data, organizationName: e.target.value })}
+              required
+            />
           </div>
-        )}
+          {errors?.organizationName && (
+            <p className="text-[10px] text-red-500 font-bold ml-1 uppercase">{errors.organizationName}</p>
+          )}
+        </div>
+
+        {/* Subdomain */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Platform URL</label>
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent-purple transition-colors">
+              <Globe className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              placeholder="acme"
+              className={cn(
+                "w-full h-12 glass-dark border rounded-xl pl-11 pr-24 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-white/10 transition-all font-medium",
+                errors?.subdomain ? "border-red-500/50" : "border-white/5 focus:border-accent-purple/30"
+              )}
+              value={data.subdomain}
+              onChange={(e) => handleSubdomainChange(e.target.value)}
+              required
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-text-muted">
+              .smartlms.com
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between px-1 min-h-[20px]">
+            {errors?.subdomain ? (
+              <p className="text-[10px] text-red-500 font-bold uppercase">{errors.subdomain}</p>
+            ) : data.subdomain.length >= 3 ? (
+              <div className="flex items-center gap-2">
+                {checking ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin text-accent-cyan" />
+                    <span className="text-[10px] text-text-muted font-bold uppercase">Verifying domain...</span>
+                  </>
+                ) : subdomainAvailable === true ? (
+                  <>
+                    <Check className="w-3 h-3 text-green-500" />
+                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Perfect! URL is available</span>
+                  </>
+                ) : subdomainAvailable === false ? (
+                  <>
+                    <X className="w-3 h-3 text-red-500" />
+                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">Oops! This URL is taken</span>
+                  </>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Pick a unique identifier for your academy</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
