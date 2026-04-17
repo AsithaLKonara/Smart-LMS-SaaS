@@ -8,12 +8,14 @@ interface MarkLessonCompleteButtonProps {
   enrollmentId: string;
   lessonId: string;
   isCompleted: boolean;
+  disabled?: boolean;
 }
 
 export function MarkLessonCompleteButton({
   enrollmentId,
   lessonId,
   isCompleted,
+  disabled = false,
 }: MarkLessonCompleteButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export function MarkLessonCompleteButton({
   }
 
   return (
-    <Button onClick={handleComplete} loading={loading}>
+    <Button onClick={handleComplete} loading={loading} disabled={disabled}>
       Mark as Complete
     </Button>
   );

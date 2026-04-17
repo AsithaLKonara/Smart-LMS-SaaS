@@ -38,12 +38,13 @@ export async function getExamById(examId: string) {
 /**
  * Get exam attempt by user
  */
-export async function getExamAttempt(examId: string, userId: string) {
+export async function getExamAttempt(examId: string, userId: string, attemptNumber = 1) {
   return prisma.examAttempt.findUnique({
     where: {
-      examId_userId: {
+      examId_userId_attemptNumber: {
         examId,
         userId,
+        attemptNumber,
       },
     },
   });
@@ -76,9 +77,10 @@ export async function submitExamAttempt(
 ) {
   return prisma.examAttempt.update({
     where: {
-      examId_userId: {
+      examId_userId_attemptNumber: {
         examId,
         userId,
+        attemptNumber: 1,
       },
     },
     data,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser } from '@/lib/auth/user';
 import { z } from 'zod';
+import { assertSeatAvailable, assertTenantOperational } from '@/lib/billing/seats';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -13,6 +14,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
+
+    const op = await assertTenantOperational(validatedData.tenantId);
+    if (!op.ok) {
+      return NextResponse.json({ success: false, error: op.message }, { status: 403 });
+    }
+
+    const seats = await assertSeatAvailable(validatedData.tenantId);
+    if (!seats.ok) {
+      return NextResponse.json({ success: false, error: seats.message }, { status: 403 });
+    }
 
     const user = await createUser(
       validatedData.email,

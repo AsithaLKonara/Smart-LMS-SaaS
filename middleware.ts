@@ -51,22 +51,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin routes
-  if (path.startsWith('/admin')) {
-    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+  const isAdminLike = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const isInstructorLike = role === 'INSTRUCTOR' || isAdminLike;
+
+  // Tenant-admin pages
+  if (path.startsWith('/admin') || path.startsWith('/billing') || path.startsWith('/security')) {
+    if (!isAdminLike) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
   // Instructor routes
-  if (path.startsWith('/instructor')) {
-    if (
-      role !== 'INSTRUCTOR' &&
-      role !== 'ADMIN' &&
-      role !== 'SUPER_ADMIN'
-    ) {
+  if (
+    path.startsWith('/instructor') ||
+    path.startsWith('/assets') ||
+    path.startsWith('/gradebook') ||
+    path.startsWith('/cohorts')
+  ) {
+    if (!isInstructorLike) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
+  }
+
+  // API route restrictions by path group
+  if (path.startsWith('/api/billing') && !isAdminLike) {
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+  if (path.startsWith('/api/assets') && !isInstructorLike && role !== 'STUDENT') {
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+  if (path.startsWith('/api/messaging') && !token.sub) {
+    return new NextResponse('Unauthorized', { status: 401 });
   }
 
   return NextResponse.next();

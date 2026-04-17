@@ -1,9 +1,9 @@
 
 import { auth } from "@/lib/auth/config";
-import { prisma } from "@/lib/db/prisma";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
+import { findCourseInTenant, logAiRequest, permUser, requireAiPermission } from "@/lib/ai/access";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -12,19 +12,28 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
     try {
         const session = await auth();
-        if (!session?.user) {
+        if (!session?.user?.tenantId || !session.user.role) {
             return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const gate = requireAiPermission(permUser(session.user.id, session.user.role, session.user.tenantId));
+        if (!gate.ok) {
+            return new NextResponse("Forbidden", { status: 403 });
         }
 
         const { courseId } = await req.json();
 
-        const course = await prisma.course.findUnique({
-            where: { id: courseId },
-        });
+        const course = await findCourseInTenant(courseId, session.user.tenantId);
 
         if (!course) {
             return new NextResponse("Course not found", { status: 404 });
         }
+
+        if (course.instructorId !== session.user.id && session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+            return new NextResponse("Forbidden", { status: 403 });
+        }
+
+        logAiRequest("outline", session.user.id, session.user.tenantId, { courseId });
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o",

@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
 import { Platform } from "@prisma/client";
+import { hasPermission } from "@/lib/auth/permissions";
+import { PERMISSIONS } from "@/constants/permissions";
 
 export async function createLiveClass(
     courseId: string,
@@ -19,15 +21,22 @@ export async function createLiveClass(
     try {
         const session = await auth();
         const userId = session?.user?.id;
+        const tenantId = session?.user?.tenantId;
+        const role = session?.user?.role;
 
-        if (!userId) {
+        if (!userId || !tenantId || !role) {
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        if (!hasPermission({ id: userId, role, tenantId }, PERMISSIONS.LIVE_CREATE)) {
+            throw new Error("Unauthorized");
+        }
+
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -61,16 +70,23 @@ export async function deleteLiveClass(
     try {
         const session = await auth();
         const userId = session?.user?.id;
+        const tenantId = session?.user?.tenantId;
+        const role = session?.user?.role;
 
-        if (!userId) {
+        if (!userId || !tenantId || !role) {
+            throw new Error("Unauthorized");
+        }
+
+        if (!hasPermission({ id: userId, role, tenantId }, PERMISSIONS.LIVE_CREATE)) {
             throw new Error("Unauthorized");
         }
 
         // Verify course ownership first
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 

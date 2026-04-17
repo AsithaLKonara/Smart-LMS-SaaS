@@ -31,9 +31,10 @@ export async function startExam(courseId: string, examId: string) {
         // Check existing attempt
         let attempt = await prisma.examAttempt.findUnique({
             where: {
-                examId_userId: {
+                examId_userId_attemptNumber: {
                     examId,
-                    userId
+                    userId,
+                    attemptNumber: 1,
                 }
             }
         });
@@ -43,6 +44,7 @@ export async function startExam(courseId: string, examId: string) {
                 data: {
                     examId,
                     userId,
+                    attemptNumber: 1,
                     answers: {},  // Empty answers initially
                     score: 0,
                 },
@@ -70,16 +72,16 @@ export async function submitExam(
             throw new Error("Unauthorized");
         }
 
-        const attempt = await prisma.examAttempt.findUnique({
+        const attempt = await prisma.examAttempt.findFirst({
             where: {
-                examId_userId: {
-                    examId,
-                    userId
-                }
+                examId,
+                userId,
+                submittedAt: null,
             },
+            orderBy: { attemptNumber: "desc" },
             include: {
-                exam: true
-            }
+                exam: true,
+            },
         });
 
         if (!attempt) {
@@ -141,10 +143,15 @@ export async function updateExamProgress(
             throw new Error("Unauthorized");
         }
 
+        const existing = await prisma.examAttempt.findFirst({
+            where: { id: attemptId, userId },
+        });
+        if (!existing) {
+            throw new Error("Attempt not found");
+        }
         const attempt = await prisma.examAttempt.update({
             where: {
                 id: attemptId,
-                userId: userId // ensure ownership
             },
             data: {
                 answers: answers as any, // Update answers JSON

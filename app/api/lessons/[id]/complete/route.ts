@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { updateLessonProgress, updateEnrollmentProgress } from '@/lib/db/queries/enrollments';
-import { getEnrollment } from '@/lib/db/queries/enrollments';
 import { prisma } from '@/lib/db/prisma';
+import { canMarkLessonComplete } from '@/lib/db/queries/learning';
 
 export async function POST(
   request: NextRequest,
@@ -12,25 +12,20 @@ export async function POST(
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id: lessonId } = await params;
     const body = await request.json();
-    const { enrollmentId } = body;
+    const { enrollmentId, lastPosition: lastPositionRaw } = body as {
+      enrollmentId?: string;
+      lastPosition?: number;
+    };
 
     if (!enrollmentId) {
-      return NextResponse.json(
-        { success: false, error: 'Enrollment ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Enrollment ID is required' }, { status: 400 });
     }
 
-    // Verify enrollment belongs to user
-    const enrollment = await getEnrollment(session.user.id, ''); // We need to get by enrollmentId
     const enrollmentCheck = await prisma.enrollment.findFirst({
       where: {
         id: enrollmentId,
@@ -50,23 +45,43 @@ export async function POST(
     });
 
     if (!enrollmentCheck) {
+      return NextResponse.json({ success: false, error: 'Enrollment not found' }, { status: 404 });
+    }
+
+    const lessonIds = enrollmentCheck.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    if (!lessonIds.includes(lessonId)) {
+      return NextResponse.json({ success: false, error: 'Lesson not in course' }, { status: 400 });
+    }
+
+    const lastPosition = typeof lastPositionRaw === 'number' ? lastPositionRaw : undefined;
+    const gate = await canMarkLessonComplete(lessonId, enrollmentId, {
+      lastPosition,
+    });
+
+    if (!gate.ok) {
       return NextResponse.json(
-        { success: false, error: 'Enrollment not found' },
-        { status: 404 }
+        {
+          success: false,
+          error:
+            gate.reason === 'prerequisites_incomplete'
+              ? 'Complete prerequisite lessons first'
+              : gate.reason === 'video_threshold_not_met'
+                ? 'Watch more of the video to complete this lesson'
+                : 'Cannot complete lesson yet',
+          reason: gate.reason,
+          missingLessonIds: gate.missingLessonIds,
+        },
+        { status: 409 }
       );
     }
 
-    // Mark lesson as complete
     await updateLessonProgress(enrollmentId, lessonId, {
       completed: true,
       completedAt: new Date(),
+      ...(lastPosition !== undefined ? { lastPosition } : {}),
     });
 
-    // Calculate new course progress
-    const totalLessons = enrollmentCheck.course.modules.reduce(
-      (sum, m) => sum + m.lessons.length,
-      0
-    );
+    const totalLessons = enrollmentCheck.course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
 
     const completedLessons = await prisma.lessonProgress.count({
       where: {
@@ -77,12 +92,7 @@ export async function POST(
 
     const newProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
-    // Update enrollment progress
-    await updateEnrollmentProgress(
-      enrollmentId,
-      newProgress,
-      newProgress === 100 ? new Date() : undefined
-    );
+    await updateEnrollmentProgress(enrollmentId, newProgress, newProgress === 100 ? new Date() : undefined);
 
     return NextResponse.json({
       success: true,
@@ -98,4 +108,3 @@ export async function POST(
     );
   }
 }
-

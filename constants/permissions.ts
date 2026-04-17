@@ -1,47 +1,102 @@
 /**
  * Permission constants for RBAC
+ * See docs/RBAC_MATRIX.md — User.role is primary; Role.permissions JSON is reserved for future overlays.
  */
 
 export const PERMISSIONS = {
-  // Course permissions
+  // Course
   COURSE_CREATE: 'course:create',
   COURSE_EDIT: 'course:edit',
   COURSE_DELETE: 'course:delete',
   COURSE_VIEW: 'course:view',
   COURSE_PUBLISH: 'course:publish',
 
-  // Student permissions
+  // Students / roster
   STUDENT_MANAGE: 'student:manage',
   STUDENT_VIEW: 'student:view',
 
-  // Exam permissions
+  // Assignments
+  ASSIGNMENT_SUBMIT: 'assignment:submit',
+  ASSIGNMENT_GRADE: 'assignment:grade',
+
+  // Grading
+  GRADE_OVERRIDE: 'grade:override',
+
+  // Exams
   EXAM_CREATE: 'exam:create',
   EXAM_EDIT: 'exam:edit',
   EXAM_DELETE: 'exam:delete',
   EXAM_GRADE: 'exam:grade',
   EXAM_TAKE: 'exam:take',
 
-  // Tenant permissions
+  // Live / calendar
+  LIVE_CREATE: 'live:create',
+  LIVE_JOIN: 'live:join',
+
+  // Messaging
+  MESSAGE_DIRECT: 'message:direct',
+  MESSAGE_BROADCAST: 'message:broadcast',
+
+  // Assets
+  ASSET_UPLOAD: 'asset:upload',
+  ASSET_DOWNLOAD: 'asset:download',
+
+  // Tenant / users
   TENANT_MANAGE: 'tenant:manage',
   TENANT_VIEW: 'tenant:view',
-
-  // User permissions
   USER_MANAGE: 'user:manage',
   USER_VIEW: 'user:view',
+
+  // Billing / audit
+  BILLING_VIEW: 'billing:view',
+  AUDIT_VIEW: 'audit:view',
+
+  // Cohorts (future UI)
+  COHORT_MANAGE: 'cohort:manage',
+
+  // AI
+  AI_USE: 'ai:use',
+  AI_ADMIN: 'ai:admin',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+const ALL = Object.values(PERMISSIONS);
 
 /**
  * Role-based permission mapping
  */
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
-  SUPER_ADMIN: Object.values(PERMISSIONS),
+  SUPER_ADMIN: ALL,
   ADMIN: [
     PERMISSIONS.TENANT_MANAGE,
     PERMISSIONS.TENANT_VIEW,
     PERMISSIONS.USER_MANAGE,
     PERMISSIONS.USER_VIEW,
+    PERMISSIONS.COURSE_CREATE,
+    PERMISSIONS.COURSE_EDIT,
+    PERMISSIONS.COURSE_DELETE,
+    PERMISSIONS.COURSE_VIEW,
+    PERMISSIONS.COURSE_PUBLISH,
+    PERMISSIONS.STUDENT_MANAGE,
+    PERMISSIONS.STUDENT_VIEW,
+    PERMISSIONS.ASSIGNMENT_GRADE,
+    PERMISSIONS.GRADE_OVERRIDE,
+    PERMISSIONS.EXAM_CREATE,
+    PERMISSIONS.EXAM_EDIT,
+    PERMISSIONS.EXAM_DELETE,
+    PERMISSIONS.EXAM_GRADE,
+    PERMISSIONS.LIVE_CREATE,
+    PERMISSIONS.LIVE_JOIN,
+    PERMISSIONS.MESSAGE_DIRECT,
+    PERMISSIONS.MESSAGE_BROADCAST,
+    PERMISSIONS.ASSET_UPLOAD,
+    PERMISSIONS.ASSET_DOWNLOAD,
+    PERMISSIONS.BILLING_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+    PERMISSIONS.COHORT_MANAGE,
+    PERMISSIONS.AI_USE,
+    PERMISSIONS.AI_ADMIN,
   ],
   INSTRUCTOR: [
     PERMISSIONS.COURSE_CREATE,
@@ -50,14 +105,26 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.COURSE_VIEW,
     PERMISSIONS.COURSE_PUBLISH,
     PERMISSIONS.STUDENT_VIEW,
+    PERMISSIONS.ASSIGNMENT_GRADE,
     PERMISSIONS.EXAM_CREATE,
     PERMISSIONS.EXAM_EDIT,
     PERMISSIONS.EXAM_DELETE,
     PERMISSIONS.EXAM_GRADE,
+    PERMISSIONS.LIVE_CREATE,
+    PERMISSIONS.LIVE_JOIN,
+    PERMISSIONS.MESSAGE_DIRECT,
+    PERMISSIONS.MESSAGE_BROADCAST,
+    PERMISSIONS.ASSET_UPLOAD,
+    PERMISSIONS.ASSET_DOWNLOAD,
+    PERMISSIONS.AI_USE,
   ],
   STUDENT: [
     PERMISSIONS.COURSE_VIEW,
+    PERMISSIONS.ASSIGNMENT_SUBMIT,
     PERMISSIONS.EXAM_TAKE,
+    PERMISSIONS.LIVE_JOIN,
+    PERMISSIONS.MESSAGE_DIRECT,
+    PERMISSIONS.ASSET_DOWNLOAD,
+    PERMISSIONS.AI_USE,
   ],
 };
-

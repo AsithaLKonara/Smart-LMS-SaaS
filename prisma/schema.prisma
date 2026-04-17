@@ -35,8 +35,21 @@ enum RoleType {
 
 enum CourseStatus {
   DRAFT
+  IN_REVIEW
   PUBLISHED
   ARCHIVED
+}
+
+enum LessonCompletionMode {
+  MANUAL
+  VIDEO_THRESHOLD
+  QUIZ_PASS
+}
+
+enum AssetDownloadPolicy {
+  TENANT_STAFF
+  COURSE_ENROLLED
+  PUBLIC_WITHIN_TENANT
 }
 
 enum Platform {
@@ -66,6 +79,25 @@ enum BadgeType {
   DEDICATED_LEARNER
 }
 
+enum MessageScope {
+  DIRECT
+  COURSE
+}
+
+enum AssetType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  SCORM
+  OTHER
+}
+
+enum ScormStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
 // ============================================
 // TENANT & USER MODELS
 // ============================================
@@ -78,12 +110,19 @@ model Tenant {
   accentColor String?  @default("#22D3EE")
   plan        Plan     @default(FREE)
   status      Status   @default(ACTIVE)
+  timezone    String   @default("UTC")
+  onboardingCompleted Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   users   User[]
   courses Course[]
   roles   Role[]
+  billingProfile BillingProfile?
+  invoices       Invoice[]
+  usageMetrics   UsageMetric[]
+  messageThreads MessageThread[]
+  assets         Asset[]
 
   @@index([subdomain])
   @@map("tenants")
@@ -96,6 +135,7 @@ model User {
   name         String
   password     String // Hashed
   role         RoleType      @default(STUDENT)
+  timezone     String?
   avatar       String?
   emailVerified DateTime?
   isTwoFactorEnabled Boolean @default(false)
@@ -107,11 +147,20 @@ model User {
   enrollments     Enrollment[]
   examAttempts    ExamAttempt[]
   submissions     Submission[]
+  gradedSubmissions Submission[] @relation("SubmissionGrader")
   aiChats         AIChat[]
   notifications   Notification[]
   badges          Badge[]
   streak          Streak?
   courses         Course[]        @relation("Instructor")
+  sentMessages    Message[]       @relation("MessageSender")
+  createdThreads  MessageThread[]
+  threadMembers   ThreadMember[]
+  assets          Asset[]
+  notificationPreferences NotificationPreference[]
+  liveClassAttendances LiveClassAttendance[]
+  gradeHistoryActs SubmissionGradeHistory[] @relation("GradeHistoryActor")
+  courseAuditLogs CourseAuditLog[] @relation("CourseAuditActor")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -146,6 +195,7 @@ model Course {
   thumbnail    String?
   price        Float?        @default(0)
   status       CourseStatus  @default(DRAFT)
+  publishedAt  DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -157,6 +207,9 @@ model Course {
   assignments Assignment[]
   liveClasses LiveClass[]
   aiChats     AIChat[]
+  messageThreads MessageThread[]
+  assets         Asset[]
+  auditLogs   CourseAuditLog[]
 
   @@index([tenantId])
   @@index([instructorId])
@@ -187,15 +240,47 @@ model Lesson {
   duration  Int?     // Duration in seconds
   isFree    Boolean  @default(false)
   order     Int
+  completionMode         LessonCompletionMode @default(MANUAL)
+  videoCompletionThreshold Float             @default(0.9)
+  revisionNote           String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   module         Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
   aiChats        AIChat[]
+  prerequisites  LessonPrerequisite[] @relation("LessonPrereqSource")
+  prerequisiteFor LessonPrerequisite[] @relation("LessonPrereqTarget")
 
   @@index([moduleId])
   @@map("lessons")
+}
+
+model LessonPrerequisite {
+  lessonId         String
+  requiresLessonId String
+  lesson           Lesson @relation("LessonPrereqSource", fields: [lessonId], references: [id], onDelete: Cascade)
+  requiresLesson   Lesson @relation("LessonPrereqTarget", fields: [requiresLessonId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, requiresLessonId])
+  @@map("lesson_prerequisites")
+}
+
+model CourseAuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  courseId  String
+  actorId   String
+  action    String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  actor  User   @relation("CourseAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([tenantId])
+  @@map("course_audit_logs")
 }
 
 // ============================================
@@ -251,6 +336,9 @@ model Exam {
   questions Json     // Array of question objects
   startDate DateTime?
   endDate   DateTime?
+  maxAttempts Int    @default(1)
+  rubric    Json?
+  allowLate Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -265,6 +353,7 @@ model ExamAttempt {
   id         String    @id @default(cuid())
   examId     String
   userId     String
+  attemptNumber Int    @default(1)
   answers    Json      // User's answers
   score      Float?
   submittedAt DateTime?
@@ -273,7 +362,7 @@ model ExamAttempt {
   exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([examId, userId])
+  @@unique([examId, userId, attemptNumber])
   @@index([examId])
   @@index([userId])
   @@map("exam_attempts")
@@ -287,6 +376,10 @@ model Assignment {
   attachmentUrl String?   // Resource for student (template, instructions)
   totalPoints   Int       @default(100)
   dueDate       DateTime?
+  allowLate     Boolean   @default(true)
+  latePenaltyPercent Float @default(0)
+  maxSubmissions Int      @default(1)
+  rubric        Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -305,16 +398,36 @@ model Submission {
   fileUrl      String?   // File upload URL
   grade        Float?
   feedback     String?
+  gradedById   String?
+  submitCount  Int       @default(1)
   submittedAt  DateTime  @default(now())
   gradedAt     DateTime?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gradedBy   User?      @relation("SubmissionGrader", fields: [gradedById], references: [id], onDelete: SetNull)
+  gradeHistory SubmissionGradeHistory[]
 
   @@unique([assignmentId, userId])
   @@index([assignmentId])
   @@index([userId])
   @@map("submissions")
+}
+
+model SubmissionGradeHistory {
+  id            String   @id @default(cuid())
+  submissionId String
+  actorId       String
+  previousGrade Float?
+  newGrade      Float?
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  actor      User       @relation("GradeHistoryActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("submission_grade_history")
 }
 
 // ============================================
@@ -335,10 +448,27 @@ model LiveClass {
   updatedAt   DateTime @updatedAt
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attendances LiveClassAttendance[]
 
   @@index([courseId])
   @@index([scheduledAt])
   @@map("live_classes")
+}
+
+model LiveClassAttendance {
+  id          String    @id @default(cuid())
+  liveClassId String
+  userId      String
+  joinedAt    DateTime?
+  leftAt      DateTime?
+  status      String    @default("invited")
+
+  liveClass LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([liveClassId, userId])
+  @@index([userId])
+  @@map("live_class_attendance")
 }
 
 // ============================================
@@ -385,6 +515,156 @@ model Notification {
   @@index([read])
   @@index([userId, read])
   @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   String           // IN_APP | EMAIL
+  enabled   Boolean          @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, channel])
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+model MessageThread {
+  id          String       @id @default(cuid())
+  tenantId    String
+  courseId    String?
+  scope       MessageScope @default(DIRECT)
+  title       String?
+  createdById String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members     ThreadMember[]
+  messages    Message[]
+
+  @@index([tenantId])
+  @@index([courseId])
+  @@index([createdById])
+  @@map("message_threads")
+}
+
+model ThreadMember {
+  id        String   @id @default(cuid())
+  threadId  String
+  userId    String
+  joinedAt  DateTime @default(now())
+  lastReadAt DateTime?
+
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([userId])
+  @@map("thread_members")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  threadId  String
+  senderId  String
+  body      String
+  attachmentUrl String?
+  flagged   Boolean  @default(false)
+  removedAt DateTime?
+  createdAt DateTime @default(now())
+
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User          @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Asset {
+  id           String      @id @default(cuid())
+  tenantId     String
+  uploadedById String
+  courseId     String?
+  parentFolderId String?
+  name         String
+  type         AssetType   @default(OTHER)
+  url          String
+  sizeBytes    Int?
+  tags         String[]
+  scormVersion String?
+  scormStatus  ScormStatus?
+  version      Int         @default(1)
+  downloadPolicy AssetDownloadPolicy @default(TENANT_STAFF)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploadedBy User   @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  course     Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  parentFolder Asset?  @relation("AssetFolder", fields: [parentFolderId], references: [id], onDelete: SetNull)
+  childAssets  Asset[] @relation("AssetFolder")
+
+  @@index([tenantId])
+  @@index([uploadedById])
+  @@index([courseId])
+  @@index([type])
+  @@index([parentFolderId])
+  @@map("assets")
+}
+
+model BillingProfile {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  currentPlan Plan     @default(FREE)
+  billingEmail String
+  seatLimit   Int      @default(10)
+  subscriptionStatus String @default("active")
+  graceEndsAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("billing_profiles")
+}
+
+model Invoice {
+  id           String   @id @default(cuid())
+  tenantId     String
+  amountCents  Int
+  currency     String   @default("USD")
+  status       String   @default("paid")
+  issuedAt     DateTime @default(now())
+  paidAt       DateTime?
+  invoiceUrl   String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([issuedAt])
+  @@map("invoices")
+}
+
+model UsageMetric {
+  id            String   @id @default(cuid())
+  tenantId      String
+  metricKey     String
+  metricValue   Int      @default(0)
+  periodStart   DateTime
+  periodEnd     DateTime
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, metricKey])
+  @@index([periodStart, periodEnd])
+  @@map("usage_metrics")
 }
 
 // ============================================

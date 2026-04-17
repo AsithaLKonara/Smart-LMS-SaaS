@@ -27,10 +27,10 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: 'npm run dev',
+        command: 'npm run build && next start -H 127.0.0.1 -p 3000',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120000,
+        reuseExistingServer: true,
+        timeout: 240000,
         env: {
             NEXTAUTH_SECRET: 'supersecret',
         },

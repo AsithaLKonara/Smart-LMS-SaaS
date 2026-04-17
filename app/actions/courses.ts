@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
 import { Course, Lesson, Module } from "@prisma/client";
+import { transitionCourseStatus, assertCourseStructuralEditable, assertLessonUpdateAllowed } from "@/lib/db/queries/course-lifecycle";
+import { assertTenantOperational } from "@/lib/billing/seats";
 
 export async function createCourse(data: { title: string }) {
     try {
@@ -13,6 +15,11 @@ export async function createCourse(data: { title: string }) {
 
         if (!userId || !tenantId) {
             throw new Error("Unauthorized");
+        }
+
+        const op = await assertTenantOperational(tenantId);
+        if (!op.ok) {
+            throw new Error(op.message);
         }
 
         const course = await prisma.course.create({
@@ -44,13 +51,26 @@ export async function updateCourse(
             throw new Error("Unauthorized");
         }
 
+        const existing = await prisma.course.findFirst({
+            where: { id: courseId, instructorId: userId },
+            select: { status: true, tenantId: true },
+        });
+        if (!existing) {
+            throw new Error("Unauthorized");
+        }
+        if (existing.status === "ARCHIVED") {
+            throw new Error("Course is archived");
+        }
+
+        const { status: _ignored, ...data } = values;
+
         const course = await prisma.course.update({
             where: {
                 id: courseId,
                 instructorId: userId,
             },
             data: {
-                ...values,
+                ...data,
             },
         });
 
@@ -66,22 +86,17 @@ export async function publishCourse(courseId: string) {
     try {
         const session = await auth();
         const userId = session?.user?.id;
+        const tenantId = session?.user?.tenantId;
 
-        if (!userId) {
+        if (!userId || !tenantId) {
             throw new Error("Unauthorized");
         }
 
-        const course = await prisma.course.findUnique({
+        const course = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
-            },
-            include: {
-                modules: {
-                    include: {
-                        lessons: true,
-                    },
-                },
+                tenantId,
             },
         });
 
@@ -89,28 +104,7 @@ export async function publishCourse(courseId: string) {
             throw new Error("Not found");
         }
 
-        const hasPublishedLessons = course.modules.some((module) =>
-            module.lessons.some((lesson) => {
-                // In future, check isPublished on lesson if added.
-                // For now, checks if at least one lesson exists.
-                return true;
-            })
-        );
-
-        // Ensure required fields are present (Double check server-side)
-        if (!course.title || !course.description || !hasPublishedLessons) {
-            throw new Error("Missing required fields");
-        }
-
-        const updatedCourse = await prisma.course.update({
-            where: {
-                id: courseId,
-                instructorId: userId,
-            },
-            data: {
-                status: "PUBLISHED",
-            },
-        });
+        const updatedCourse = await transitionCourseStatus(courseId, tenantId, userId, "PUBLISHED");
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return updatedCourse;
@@ -124,23 +118,24 @@ export async function unpublishCourse(courseId: string) {
     try {
         const session = await auth();
         const userId = session?.user?.id;
+        const tenantId = session?.user?.tenantId;
 
-        if (!userId) {
+        if (!userId || !tenantId) {
             throw new Error("Unauthorized");
         }
 
-        const course = await prisma.course.update({
-            where: {
-                id: courseId,
-                instructorId: userId,
-            },
-            data: {
-                status: "DRAFT",
-            },
+        const course = await prisma.course.findFirst({
+            where: { id: courseId, instructorId: userId, tenantId },
         });
 
+        if (!course) {
+            throw new Error("Not found");
+        }
+
+        const updated = await transitionCourseStatus(courseId, tenantId, userId, "DRAFT");
+
         revalidatePath(`/instructor/courses/${courseId}`);
-        return course;
+        return updated;
     } catch (error) {
         console.log("[COURSE_UNPUBLISH]", error);
         throw new Error("Internal Error");
@@ -161,7 +156,7 @@ export async function createModule(courseId: string, title: string) {
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -171,6 +166,8 @@ export async function createModule(courseId: string, title: string) {
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         const lastModule = await prisma.module.findFirst({
             where: {
@@ -212,7 +209,7 @@ export async function updateModule(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -221,6 +218,9 @@ export async function updateModule(
 
         if (!courseOwner) {
             throw new Error("Unauthorized");
+        }
+        if (courseOwner.status === "ARCHIVED") {
+            throw new Error("Course is archived");
         }
 
         const module = await prisma.module.update({
@@ -253,7 +253,7 @@ export async function reorderModules(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -263,6 +263,8 @@ export async function reorderModules(
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         for (const item of updateData) {
             await prisma.module.update({
@@ -288,7 +290,7 @@ export async function deleteModule(courseId: string, moduleId: string) {
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -298,6 +300,8 @@ export async function deleteModule(courseId: string, moduleId: string) {
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         const module = await prisma.module.delete({
             where: {
@@ -330,7 +334,7 @@ export async function createLesson(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -340,6 +344,8 @@ export async function createLesson(
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         const lastLesson = await prisma.lesson.findFirst({
             where: {
@@ -382,7 +388,7 @@ export async function updateLesson(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -392,6 +398,8 @@ export async function updateLesson(
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertLessonUpdateAllowed(courseId, courseOwner.tenantId, values as Record<string, unknown>);
 
         const lesson = await prisma.lesson.update({
             where: {
@@ -424,7 +432,7 @@ export async function reorderLessons(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -434,6 +442,8 @@ export async function reorderLessons(
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         for (const item of updateData) {
             await prisma.lesson.update({
@@ -463,7 +473,7 @@ export async function deleteLesson(
             throw new Error("Unauthorized");
         }
 
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
@@ -473,6 +483,8 @@ export async function deleteLesson(
         if (!courseOwner) {
             throw new Error("Unauthorized");
         }
+
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         const lesson = await prisma.lesson.delete({
             where: {
@@ -502,6 +514,14 @@ export async function applyAIOutline(
         if (!userId) {
             throw new Error("Unauthorized");
         }
+
+        const courseOwner = await prisma.course.findFirst({
+            where: { id: courseId, instructorId: userId },
+        });
+        if (!courseOwner) {
+            throw new Error("Unauthorized");
+        }
+        await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
         // Get last module order
         const lastModule = await prisma.module.findFirst({

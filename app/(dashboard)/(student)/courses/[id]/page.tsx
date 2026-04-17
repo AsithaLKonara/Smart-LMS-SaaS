@@ -2,7 +2,6 @@ import { auth } from '@/lib/auth/config';
 import { redirect } from 'next/navigation';
 import { getCourseById } from '@/lib/db/queries/courses';
 import { getEnrollment } from '@/lib/db/queries/enrollments';
-import { createEnrollment } from '@/lib/db/queries/enrollments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/layout/Container';
@@ -10,6 +9,7 @@ import Link from 'next/link';
 import { Calendar, Video, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { EnrollButton } from '@/components/features/EnrollButton';
+import { getPrerequisiteMapForCourse, getResumeLessonId, isLessonUnlocked } from '@/lib/db/queries/learning';
 
 interface CoursePageProps {
   params: Promise<{ id: string }>;
@@ -41,6 +41,17 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
     0
   );
 
+  const orderedLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const prereqMap = await getPrerequisiteMapForCourse(id);
+  const completedLessonIds = new Set(
+    (enrollment?.lessonProgress ?? []).filter((lp) => lp.completed).map((lp) => lp.lesson.id)
+  );
+  const resumeLessonId =
+    enrollment &&
+    getResumeLessonId(orderedLessonIds, prereqMap, completedLessonIds);
+  const primaryCtaLessonId =
+    resumeLessonId ?? course.modules[0]?.lessons[0]?.id ?? '';
+
   return (
     <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
       <Container className="py-8">
@@ -51,7 +62,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
           >
             ← Back to Courses
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2 font-heading">
             {course.title}
           </h1>
           <p className="text-text-secondary">
@@ -62,7 +73,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <Card variant="elevated">
+            <Card variant="glass" className="glass-hover">
               <CardHeader>
                 <CardTitle>About This Course</CardTitle>
               </CardHeader>
@@ -75,7 +86,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
             {/* Live Classes (if any) */}
             {course.liveClasses && course.liveClasses.length > 0 && (
-              <Card variant="elevated">
+              <Card variant="glass" className="glass-hover">
                 <CardHeader>
                   <CardTitle>Live Sessions</CardTitle>
                   <CardDescription>
@@ -85,7 +96,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 <CardContent>
                   <div className="space-y-4">
                     {course.liveClasses.map((liveClass) => (
-                      <div key={liveClass.id} className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-background-primary">
+                      <div key={liveClass.id} className="flex items-center justify-between p-3 rounded-lg glass border-white/10 glass-hover">
                         <div className="flex items-center gap-x-3">
                           <div className="p-2 rounded-full bg-accent-purple/10">
                             <Video className="h-4 w-4 text-accent-purple" />
@@ -112,7 +123,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
             {/* Assignments (if any) */}
             {course.assignments && course.assignments.length > 0 && (
-              <Card variant="elevated">
+              <Card variant="glass" className="glass-hover">
                 <CardHeader>
                   <CardTitle>Assignments</CardTitle>
                   <CardDescription>
@@ -122,7 +133,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 <CardContent>
                   <div className="space-y-4">
                     {course.assignments.map((assignment) => (
-                      <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-background-primary">
+                      <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg glass border-white/10 glass-hover">
                         <div className="flex items-center gap-x-3">
                           <div className="p-2 rounded-full bg-green-500/10">
                             <ClipboardList className="h-4 w-4 text-green-500" />
@@ -150,7 +161,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             )}
 
             {/* Course Modules */}
-            <Card variant="elevated">
+            <Card variant="glass" className="glass-hover">
               <CardHeader>
                 <CardTitle>Course Content</CardTitle>
                 <CardDescription>
@@ -161,7 +172,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 <div className="space-y-4">
                   {course.modules.map((module, moduleIndex) => (
                     <div key={module.id} className="border-b border-white/10 last:border-0 pb-4 last:pb-0">
-                      <h3 className="text-lg font-semibold text-text-primary mb-3">
+                      <h3 className="text-lg font-semibold text-text-primary mb-3 font-heading">
                         Module {moduleIndex + 1}: {module.title}
                       </h3>
                       <div className="space-y-2 ml-4">
@@ -170,22 +181,31 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                             (lp) => lp.lesson.id === lesson.id
                           );
                           const isCompleted = lessonProgress?.completed || false;
+                          const unlocked =
+                            !isEnrolled ||
+                            isLessonUnlocked(lesson.id, prereqMap, completedLessonIds);
 
                           return (
                             <div
                               key={lesson.id}
-                              className="flex items-center justify-between p-2 rounded-lg hover:bg-background-card transition-colors"
+                              className="flex items-center justify-between p-2 rounded-lg glass-light border-white/5 hover:border-white/10 transition-colors glass-hover"
                             >
                               <div className="flex items-center space-x-3">
                                 <span className="text-text-muted text-sm">
                                   {moduleIndex + 1}.{lessonIndex + 1}
                                 </span>
-                                <Link
-                                  href={`/courses/${id}/lessons/${lesson.id}`}
-                                  className="text-text-secondary hover:text-text-primary transition-colors"
-                                >
-                                  {lesson.title}
-                                </Link>
+                                {unlocked ? (
+                                  <Link
+                                    href={`/courses/${id}/lessons/${lesson.id}`}
+                                    className="text-text-secondary hover:text-text-primary transition-colors"
+                                  >
+                                    {lesson.title}
+                                  </Link>
+                                ) : (
+                                  <span className="text-text-muted cursor-not-allowed" title="Complete prerequisites first">
+                                    {lesson.title} (locked)
+                                  </span>
+                                )}
                                 {isCompleted && (
                                   <span className="text-accent-cyan text-sm">✓</span>
                                 )}
@@ -209,7 +229,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card variant="elevated" className="sticky top-8">
+            <Card variant="glass-dark" className="sticky top-8 glass-hover">
               <CardHeader>
                 <CardTitle>Course Info</CardTitle>
               </CardHeader>
@@ -252,8 +272,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
                 <div className="pt-4 border-t border-white/10">
                   {isEnrolled ? (
-                    <Link href={`/courses/${id}/lessons/${course.modules[0]?.lessons[0]?.id || ''}`}>
-                      <Button className="w-full" size="lg">
+                    <Link href={primaryCtaLessonId ? `/courses/${id}/lessons/${primaryCtaLessonId}` : `#`}>
+                      <Button className="w-full" size="lg" disabled={!primaryCtaLessonId}>
                         {enrollment && enrollment.progress > 0
                           ? 'Continue Learning'
                           : 'Start Course'}

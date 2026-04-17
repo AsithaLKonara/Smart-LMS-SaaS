@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { getCourseById } from '@/lib/db/queries/courses';
 import { getEnrollment, createEnrollment } from '@/lib/db/queries/enrollments';
+import { assertTenantOperational } from '@/lib/billing/seats';
 
 export async function POST(
   request: NextRequest,
@@ -36,6 +37,11 @@ export async function POST(
         { success: false, error: 'Course is not available for enrollment' },
         { status: 400 }
       );
+    }
+
+    const op = await assertTenantOperational(tenantId);
+    if (!op.ok) {
+      return NextResponse.json({ success: false, error: op.message }, { status: 403 });
     }
 
     // Check if already enrolled
