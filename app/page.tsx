@@ -23,6 +23,7 @@ import { Integrations } from "@/components/landing/Integrations";
 import { Pricing } from "@/components/landing/Pricing";
 import { FAQ } from "@/components/landing/FAQ";
 import { CertificationCTA } from "@/components/landing/CertificationCTA";
+import { PublicChatWidget } from "@/components/features/ai/PublicChatWidget";
 
 export default function Home() {
   return (
@@ -164,6 +165,9 @@ export default function Home() {
 
       {/* 13. Footer Section */}
       <Footer />
+
+      {/* AI Chat Widget — floating bottom-right */}
+      <PublicChatWidget />
     </main>
   );
 }
