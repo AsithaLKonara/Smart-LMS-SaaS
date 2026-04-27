@@ -2,20 +2,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendLiveClassReminder } from "@/lib/mail";
-import { addHours, startOfMinute, endOfMinute } from "date-fns";
+import { addHours, format } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Unified Cron Route for System Reminders
+ * Handles:
+ * 1. Live Class Reminders (1 hour before start)
+ */
 export async function GET(req: Request) {
     try {
-        // Find classes starting in exactly 1 hour (with 5 min buffer for cron drift)
+        // 1. Security Check
+        const authHeader = req.headers.get('authorization');
+        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+
         const now = new Date();
-        const oneHourFromNow = addHours(now, 1);
+        const oneHourFromNow = addHours(now, 1.1); // 1 hour + 6 min buffer
 
-        // Window: [Scenario] Class starts at 10:00. Cron runs at 09:00.
-        // We look for classes scheduled between 09:55 and 10:05? 
-        // Better: look for classes starting in the next hour that haven't had reminders sent.
-
+        // --- Task A: Live Class Reminders ---
         const upcomingClasses = await prisma.liveClass.findMany({
             where: {
                 scheduledAt: {
@@ -37,22 +44,21 @@ export async function GET(req: Request) {
             },
         });
 
-        if (upcomingClasses.length === 0) {
-            return NextResponse.json({ message: "No upcoming classes found for reminders." });
-        }
+        console.log(`[CRON] Processing ${upcomingClasses.length} live class reminders.`);
 
         const results = [];
 
         for (const liveClass of upcomingClasses) {
-            const students = liveClass.course.enrollments.map((e) => e.user);
+            const enrollments = (liveClass as any).course.enrollments;
+            const students = enrollments.map((e: any) => e.user).filter((u: any) => u.email);
 
-            // Send emails in parallel
-            const emailPromises = students.map((student) =>
+            // Send emails
+            const emailPromises = students.map((student: any) =>
                 sendLiveClassReminder(
                     student.email,
-                    student.name,
+                    student.name || 'Student',
                     liveClass.title,
-                    liveClass.scheduledAt.toLocaleString(),
+                    format(liveClass.scheduledAt, 'PPP p'),
                     liveClass.meetingUrl
                 )
             );
@@ -66,14 +72,17 @@ export async function GET(req: Request) {
             });
 
             results.push({
+                type: 'LIVE_CLASS_REMINDER',
                 classId: liveClass.id,
-                title: liveClass.title,
                 sentTo: students.length,
             });
         }
 
+        // --- Future Tasks (Assignments, Exams) can be added here ---
+
         return NextResponse.json({
             success: true,
+            timestamp: now.toISOString(),
             processed: results.length,
             details: results
         });

@@ -58,7 +58,7 @@ export default async function EditAssignmentPage({
     const assignment = course.assignments[0];
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 <div className="flex flex-col gap-y-2 mb-8">
                     <Link

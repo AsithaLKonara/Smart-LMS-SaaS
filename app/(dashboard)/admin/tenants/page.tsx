@@ -12,14 +12,14 @@ export default async function AdminTenantsPage() {
     const session = await auth();
     const role = session?.user?.role;
 
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    if (role !== "SUPER_ADMIN") {
         return redirect("/dashboard");
     }
 
     const tenants = await getAllTenants();
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-text-primary">Tenant Management</h1>

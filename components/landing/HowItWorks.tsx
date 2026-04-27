@@ -34,7 +34,7 @@ const steps = [
 export function HowItWorks() {
     return (
         <section className="w-full bg-transparent py-20 flex justify-center border-y border-white/10 relative z-10">
-            <div className="w-full max-w-[1280px] px-6 md:px-[60px] lg:px-[120px] flex flex-col items-center gap-16">
+            <div className="w-full max-w-[1280px] mx-auto px-6 md:px-[60px] lg:px-[120px] flex flex-col items-center gap-16">
                 {/* Title */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

@@ -3,32 +3,44 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Play, Users, BookOpen, Award, CheckCircle2, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Play, ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { TextGradient } from "@/components/ui/TextGradient";
 import { BackgroundVideo } from "@/components/common/BackgroundVideo";
 
+// Landing Sections
+import { Stats } from "@/components/landing/Stats";
+import { ProblemStatement } from "@/components/landing/ProblemStatement";
+import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { UseCases } from "@/components/landing/UseCases";
+import { AISection } from "@/components/landing/AISection";
+import { AnalyticsSection } from "@/components/landing/AnalyticsSection";
+import { Integrations } from "@/components/landing/Integrations";
+import { Pricing } from "@/components/landing/Pricing";
+import { FAQ } from "@/components/landing/FAQ";
+import { CertificationCTA } from "@/components/landing/CertificationCTA";
+
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background-primary overflow-x-hidden relative">
-      <BackgroundVideo />
+    <main className="min-h-screen bg-transparent overflow-x-hidden relative">
+      <BackgroundVideo src="/videos/0428.mp4" videoOpacity="opacity-30" overlayOpacity="bg-black/50" />
       <Header />
 
-      {/* Hero Section */}
+      {/* 1. Hero Section */}
       <section className="relative w-full py-20 lg:py-32 flex items-center justify-center z-10">
-        {/* Background Gradients */}
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-accent-purple/10 blur-[120px] rounded-full -z-10" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent-cyan/10 blur-[120px] rounded-full -z-10" />
 
-        <div className="container px-6 lg:px-12 grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left Content */}
+        <div className="container mx-auto px-6 lg:px-12 grid lg:grid-cols-2 gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col gap-8"
+            className="flex flex-col items-center lg:items-start text-center lg:text-left gap-8"
           >
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -78,7 +90,6 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Right Content - Visual */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -93,17 +104,7 @@ export default function Home() {
                 className="object-cover transition-transform duration-700 group-hover:scale-110"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background-primary/80 via-transparent to-transparent" />
-
-              <div className="absolute bottom-6 left-6 right-6 p-4 glass rounded-2xl border border-white/10 flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold text-sm">Design & UX Masterclass</p>
-                  <p className="text-text-muted text-xs">Instructor: Alex Rivera</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-accent-cyan/20 flex items-center justify-center">
-                  <Play className="w-4 h-4 text-accent-cyan fill-accent-cyan" />
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             </div>
 
             {/* Floating Stats Card */}
@@ -112,10 +113,10 @@ export default function Home() {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute -top-10 -right-10 hidden lg:block"
             >
-              <Card className="glass shadow-premium border-white/10 p-4">
+              <Card variant="glass" className="shadow-premium border-white/10 p-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-accent-cyan/10 flex items-center justify-center">
-                    <Award className="w-6 h-6 text-accent-cyan" />
+                    <Zap className="w-6 h-6 text-accent-cyan" />
                   </div>
                   <div>
                     <p className="text-xl font-bold">98%</p>
@@ -124,67 +125,45 @@ export default function Home() {
                 </div>
               </Card>
             </motion.div>
-
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-10 -left-10 hidden lg:block"
-            >
-              <Card className="glass shadow-premium border-white/10 p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-accent-purple/10 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-accent-purple" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold">5.0</p>
-                    <p className="text-xs text-text-muted">Avg. Rating</p>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Grid - Quick Preview */}
-      <section id="features" className="py-24 relative overflow-hidden z-10">
-        <div className="container px-6 lg:px-12 text-center flex flex-col items-center gap-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col gap-4 max-w-2xl"
-          >
-            <h2 className="text-4xl font-bold font-heading">Powerful Features for <span className="text-gradient">Modern Teams</span></h2>
-            <p className="text-text-secondary text-lg">Everything you need to run a high-performance LMS at scale.</p>
-          </motion.div>
+      {/* 2. Social Proof Section */}
+      <Stats />
 
-          <div className="grid md:grid-cols-3 gap-8 w-full">
-            {[
-              { icon: Zap, title: "AI-Powered Tutoring", desc: "Automated insights and personal AI assistants for every learner." },
-              { icon: ShieldCheck, title: "Multi-Tenant Core", desc: "Secure isolation for your organization with custom branding." },
-              { icon: Users, title: "Advanced Analytics", desc: "Deep dive into engagement, revenue, and cohort performance." },
-            ].map((feature, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="p-8 rounded-3xl glass border-white/10 text-left flex flex-col gap-4 group glass-hover glass-hover-glow-cyan"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-background-primary flex items-center justify-center border border-white/10 group-hover:border-accent-cyan/50 transition-colors">
-                  <feature.icon className="w-6 h-6 text-accent-cyan" />
-                </div>
-                <h3 className="text-xl font-bold text-text-primary">{feature.title}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 3. Problem Statement Section */}
+      <ProblemStatement />
+
+      {/* 4. Features Section */}
+      <FeaturesGrid />
+
+      {/* 5. How It Works Section */}
+      <HowItWorks />
+
+      {/* 6. Use Cases Section */}
+      <UseCases />
+
+      {/* 7. AI Section */}
+      <AISection />
+
+      {/* 8. Analytics Section */}
+      <AnalyticsSection />
+
+      {/* 9. Integrations Section */}
+      <Integrations />
+
+      {/* 10. Pricing Section */}
+      <Pricing />
+
+      {/* 11. FAQ Section */}
+      <FAQ />
+
+      {/* 12. Final CTA Section */}
+      <CertificationCTA />
+
+      {/* 13. Footer Section */}
+      <Footer />
     </main>
   );
 }

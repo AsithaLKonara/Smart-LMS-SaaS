@@ -17,7 +17,7 @@ export default async function InstructorStudentsPage() {
     const students = await getStudentsByInstructor(userId);
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-text-primary">My Students</h1>

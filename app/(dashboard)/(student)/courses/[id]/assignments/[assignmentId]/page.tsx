@@ -46,7 +46,7 @@ export default async function AssignmentSubmissionPage({
     const existingSubmission = assignment.submissions[0];
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 <div className="max-w-4xl mx-auto">
                     <Link

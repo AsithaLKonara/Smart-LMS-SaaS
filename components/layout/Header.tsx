@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background-primary/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-transparent backdrop-blur-2xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-6 lg:px-12">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-grad-primary flex items-center justify-center">

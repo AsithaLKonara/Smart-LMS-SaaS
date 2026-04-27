@@ -20,7 +20,7 @@ interface TopbarProps {
 
 export function Topbar({ currentOrg, onMenuClick }: TopbarProps) {
     return (
-        <header className="h-[var(--height-topbar)] bg-background-primary/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30 px-6 flex items-center justify-between gap-6">
+        <header className="h-[var(--height-topbar)] bg-transparent backdrop-blur-md border-b border-white/5 sticky top-0 z-30 px-6 flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
                 <button
                     onClick={onMenuClick}

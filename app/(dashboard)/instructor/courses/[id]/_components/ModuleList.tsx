@@ -116,7 +116,7 @@ export const ModuleList = ({
                                 {(provided) => (
                                     <div
                                         className={cn(
-                                            "bg-background-primary border-slate-700 border text-text-primary rounded-md mb-4 text-sm",
+                                            "bg-transparent backdrop-blur-md border-slate-700 border text-text-primary rounded-md mb-4 text-sm",
                                         )}
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}

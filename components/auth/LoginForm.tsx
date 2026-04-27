@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, ChevronRight, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, LogIn, ChevronRight, AlertCircle, Loader2, Users, GraduationCap, ShieldCheck, Globe } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
@@ -43,8 +43,9 @@ export function LoginForm() {
       }
 
       if (result?.ok) {
-        router.push('/dashboard');
-        router.refresh();
+        const { getPostLoginRedirect } = await import('@/lib/auth/actions');
+        const redirectUrl = await getPostLoginRedirect(validated.email, validated.tenantId);
+        window.location.assign(redirectUrl);
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -152,6 +153,40 @@ export function LoginForm() {
               </>
             )}
           </Button>
+
+          <div className="relative py-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/5" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-transparent px-2 text-text-muted font-bold tracking-widest backdrop-blur-sm">Demo Access</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { role: 'Student', email: 'student@demo.com', icon: Users, color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-600/5' },
+              { role: 'Instructor', email: 'instructor@demo.com', icon: GraduationCap, color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-600/5' },
+              { role: 'Tenant Admin', email: 'tenantadmin@demo.com', icon: ShieldCheck, color: 'text-accent-purple', bg: 'from-purple-500/10 to-purple-600/5' },
+              { role: 'Super Admin', email: 'superadmin@platform.com', icon: Globe, color: 'text-accent-cyan', bg: 'from-cyan-500/10 to-cyan-600/5' },
+            ].map((demo) => (
+              <button
+                key={demo.role}
+                type="button"
+                onClick={() => setFormData({ ...formData, email: demo.email, password: 'Password123!' })}
+                className={`flex items-center gap-2 p-3 rounded-xl bg-gradient-to-br ${demo.bg} border border-white/5 hover:border-white/20 transition-all group text-left w-full`}
+              >
+                <div className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform flex-shrink-0 ${demo.color}`}>
+                  <demo.icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${demo.color}`}>{demo.role}</p>
+                  <p className="text-[9px] text-text-secondary truncate">{demo.email}</p>
+                  <p className="text-[8px] text-text-muted font-mono">Password123!</p>
+                </div>
+              </button>
+            ))}
+          </div>
 
           <div className="text-center pt-2">
             <p className="text-sm text-text-secondary">

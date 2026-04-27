@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils/cn';
 interface KPIItem {
     label: string;
     value: string | number;
-    icon: LucideIcon;
+    icon: React.ReactNode;
     change?: {
         value: string | number;
         trend: 'up' | 'down';
@@ -52,7 +52,7 @@ export function KPIStrip({ items }: KPIStripProps) {
                                     "w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6",
                                     colorMap[item.color]
                                 )}>
-                                    <item.icon className="w-6 h-6" />
+                                    {item.icon}
                                 </div>
 
                                 {item.change && (

@@ -42,7 +42,7 @@ export default function CreateCoursePage() {
     }
 
     return (
-        <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
+        <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
             <Card variant="elevated" className="max-w-md w-full">
                 <CardHeader>
                     <CardTitle>Name your course</CardTitle>

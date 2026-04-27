@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 
 export default function DashboardLoading() {
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 {/* Welcome Section Skeleton */}
                 <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">

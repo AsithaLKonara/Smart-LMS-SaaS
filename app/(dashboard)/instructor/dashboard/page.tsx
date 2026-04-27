@@ -13,7 +13,6 @@ import {
 import { EnrollmentChart } from "@/components/features/analytics/EnrollmentChart";
 import { RevenueChart } from "@/components/features/analytics/RevenueChart";
 import { TextGradient } from "@/components/ui/TextGradient";
-import { motion } from "framer-motion";
 
 export default async function InstructorDashboardPage() {
     const session = await auth();
@@ -50,27 +49,27 @@ export default async function InstructorDashboardPage() {
                 {
                     label: 'Total Revenue',
                     value: `$${totalRevenue.toLocaleString()}`,
-                    icon: DollarSign,
+                    icon: <DollarSign className="w-6 h-6" />,
                     color: 'cyan',
                     change: { value: '+$1,240', trend: 'up' }
                 },
                 {
                     label: 'Active Students',
                     value: totalStudents.toLocaleString(),
-                    icon: Users,
+                    icon: <Users className="w-6 h-6" />,
                     color: 'purple',
                     change: { value: '+180', trend: 'up' }
                 },
                 {
                     label: 'Published Courses',
                     value: totalCourses,
-                    icon: BookOpen,
+                    icon: <BookOpen className="w-6 h-6" />,
                     color: 'orange'
                 },
                 {
                     label: 'Course Rating',
                     value: averageRating,
-                    icon: Star,
+                    icon: <Star className="w-6 h-6" />,
                     color: 'green',
                     change: { value: '4.9/5', trend: 'up' }
                 }

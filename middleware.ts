@@ -9,7 +9,10 @@ export async function middleware(request: NextRequest) {
   // Apply rate limiting to API routes
   if (path.startsWith('/api') && !path.startsWith('/api/auth')) {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    const identifier = (await getToken({ req: request }))?.email || ip;
+    const identifier = (await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    }))?.email || ip;
     const result = await rateLimit(identifier, 100); // 100 requests per minute
 
     if (!result.success) {
@@ -51,11 +54,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAdminLike = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const isAdminLike = role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'SUPER_ADMIN';
   const isInstructorLike = role === 'INSTRUCTOR' || isAdminLike;
 
   // Tenant-admin pages
-  if (path.startsWith('/admin') || path.startsWith('/billing') || path.startsWith('/security')) {
+  if (
+    path.startsWith('/admin') ||
+    path.startsWith('/billing') ||
+    path.startsWith('/security') ||
+    path.startsWith('/analytics') ||
+    path.startsWith('/settings')
+  ) {
     if (!isAdminLike) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -97,7 +106,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm)$).*)',
   ],
 };
 

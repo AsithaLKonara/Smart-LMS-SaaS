@@ -40,6 +40,26 @@ async function main() {
 
   console.log('✅ Created admin user:', admin.email);
 
+  // Create tenant admin user
+  const tenantAdmin = await prisma.user.upsert({
+    where: {
+      tenantId_email: {
+        tenantId: tenant.id,
+        email: 'tenantadmin@demo.com',
+      },
+    },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      email: 'tenantadmin@demo.com',
+      name: 'Tenant Administrator',
+      password: '$2b$10$tQ0wNd37auGWDBvtbcP6fucyAc3iFzxS/c7OdqHJWil0E1CQDdhS2', // Password123!
+      role: 'TENANT_ADMIN',
+    },
+  });
+
+  console.log('✅ Created tenant admin user:', tenantAdmin.email);
+
   // Create instructor
   const instructor = await prisma.user.upsert({
     where: {
@@ -79,6 +99,26 @@ async function main() {
   });
 
   console.log('✅ Created student:', student.email);
+
+  // Create super admin (platform management)
+  const superAdmin = await prisma.user.upsert({
+    where: {
+      tenantId_email: {
+        tenantId: tenant.id,
+        email: 'superadmin@platform.com',
+      },
+    },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      email: 'superadmin@platform.com',
+      name: 'Platform Manager',
+      password: '$2b$10$tQ0wNd37auGWDBvtbcP6fucyAc3iFzxS/c7OdqHJWil0E1CQDdhS2', // Password123!
+      role: 'SUPER_ADMIN',
+    },
+  });
+
+  console.log('✅ Created super admin:', superAdmin.email);
 
   // Create a sample course
   const course = await prisma.course.create({

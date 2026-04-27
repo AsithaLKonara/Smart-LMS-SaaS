@@ -56,7 +56,7 @@ export const ExamTitleForm = ({
     };
 
     return (
-        <div className="mt-6 border bg-background-primary rounded-md p-4 border-white/10">
+        <div className="mt-6 border bg-transparent backdrop-blur-md rounded-md p-4 border-white/10">
             <div className="font-medium flex items-center justify-between text-text-primary">
                 Exam Title
                 <Button onClick={toggleEdit} variant="ghost" size="sm">

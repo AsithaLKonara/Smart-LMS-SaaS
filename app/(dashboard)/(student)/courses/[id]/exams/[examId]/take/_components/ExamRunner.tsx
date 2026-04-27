@@ -148,7 +148,7 @@ export const ExamRunner = ({
     return (
         <div className="max-w-4xl mx-auto p-6">
             {/* Header: Timer & Progress */}
-            <div className="flex items-center justify-between mb-6 sticky top-0 bg-background-primary z-10 py-4 border-b border-white/10">
+            <div className="flex items-center justify-between mb-6 sticky top-0 bg-transparent backdrop-blur-md z-10 py-4 border-b border-white/10">
                 <div className="flex items-center gap-x-4">
                     <h1 className="text-xl font-bold text-text-primary">{exam.title}</h1>
                     <span className="text-sm text-text-secondary">
@@ -191,7 +191,7 @@ export const ExamRunner = ({
                                             "flex items-center p-3 rounded-md border cursor-pointer hover:bg-background-secondary transition-colors",
                                             answers[currentQuestion.id] === option
                                                 ? "border-accent-cyan bg-accent-cyan/5"
-                                                : "border-white/10 bg-background-primary"
+                                                : "border-white/10 bg-transparent backdrop-blur-md"
                                         )}
                                         onClick={() => handleAnswerChange(option)}
                                     >
@@ -210,7 +210,7 @@ export const ExamRunner = ({
                         {currentQuestion.type === "SHORT_ANSWER" && (
                             <Textarea
                                 placeholder="Type your answer here..."
-                                className="min-h-[200px] resize-none text-lg bg-background-primary border-white/10"
+                                className="min-h-[200px] resize-none text-lg bg-transparent backdrop-blur-md border-white/10"
                                 value={answers[currentQuestion.id] || ""}
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                             />

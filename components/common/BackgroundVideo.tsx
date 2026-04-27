@@ -1,25 +1,34 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils/cn";
 
 interface BackgroundVideoProps {
+  src: string;
+  overlayOpacity?: string; // e.g. "bg-black/40"
+  videoOpacity?: string; // e.g. "opacity-40"
   className?: string;
 }
 
-export function BackgroundVideo({ className }: BackgroundVideoProps) {
+export function BackgroundVideo({
+  src,
+  overlayOpacity = "bg-black/60",
+  videoOpacity = "opacity-30",
+  className
+}: BackgroundVideoProps) {
   return (
-    <div className={`fixed inset-0 -z-10 h-full w-full overflow-hidden ${className || ""}`}>
+    <div className={cn("fixed inset-0 z-0 pointer-events-none h-full w-full overflow-hidden bg-background-primary", className)}>
       {/* Dark Overlay to ensure text readability */}
-      <div className="absolute inset-0 bg-black/60 z-10" />
+      <div className={cn("absolute inset-0 z-10 transition-opacity duration-1000", overlayOpacity)} />
 
       <video
         autoPlay
         muted
         loop
         playsInline
-        className="h-full w-full object-cover"
+        className={cn("absolute inset-0 z-0 h-full w-full object-cover scale-110", videoOpacity)} // Slight scale to avoid edge artifacts
       >
-        <source src="/bg-video.mp4" type="video/mp4" />
+        <source src={src} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>

@@ -54,7 +54,7 @@ const getNavItems = (role?: RoleType): NavItem[] => {
     ];
   }
 
-  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+  if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'SUPER_ADMIN') {
     return [
       { href: '/admin/dashboard', label: 'Site Admin', icon: Shield },
       { href: '/admin/users', label: 'Users', icon: Users },
@@ -89,8 +89,8 @@ export function Sidebar({ userName, userEmail, role }: SidebarProps) {
   const navItems = getNavItems(role);
 
   return (
-    <aside className="hidden md:flex flex-col w-[var(--width-sidebar)] glass border-r border-white/5 h-screen sticky top-0 overflow-y-auto z-40">
-      <div className="p-6 h-[var(--height-topbar)] flex items-center border-b border-white/5">
+    <aside className="hidden md:flex flex-col w-[var(--width-sidebar)] bg-white/[0.01] backdrop-blur-xl saturate-[180%] border-r border-white/5 h-screen sticky top-0 z-40 overflow-hidden">
+      <div className="p-6 h-[var(--height-topbar)] flex items-center border-b border-white/5 flex-shrink-0">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-lg bg-grad-primary flex items-center justify-center shadow-neon-purple transition-transform group-hover:scale-110">
             <GraduationCap className="w-5 h-5 text-white" />
@@ -101,7 +101,7 @@ export function Sidebar({ userName, userEmail, role }: SidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex-1 p-4 py-8 space-y-2">
+      <nav className="flex-1 p-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
         {navItems.map((item, idx) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
           return (
@@ -139,7 +139,7 @@ export function Sidebar({ userName, userEmail, role }: SidebarProps) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/5 gap-4 flex flex-col">
+      <div className="p-4 border-t border-white/5 gap-4 flex flex-col flex-shrink-0">
         <div className="px-4 py-3 rounded-2xl glass-dark border border-white/5 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-accent-purple/20 border border-accent-purple/30 flex items-center justify-center overflow-hidden">
             {userName ? (

@@ -11,6 +11,8 @@ import { updateStreak } from '@/lib/db/queries/gamification';
 import { OnboardingTrigger } from '@/components/features/onboarding/OnboardingTrigger';
 import { OfflineBanner } from '@/components/dashboard/OfflineBanner';
 
+import { BackgroundVideo } from '@/components/common/BackgroundVideo';
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -28,13 +30,14 @@ export default async function DashboardLayout({
   const tenant = await getTenantById(session.user.tenantId);
 
   return (
-    <div className="flex min-h-screen bg-background-primary overflow-hidden">
+    <div className="flex h-screen bg-transparent overflow-hidden relative">
+      <BackgroundVideo src="/videos/0428-1.mp4" videoOpacity="opacity-20" overlayOpacity="bg-black/60" />
       <Sidebar
         userName={session.user.name || undefined}
         userEmail={session.user.email || undefined}
         role={session.user.role}
       />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative z-10">
         <OfflineBanner />
         <Topbar
           currentOrg={{
@@ -42,7 +45,7 @@ export default async function DashboardLayout({
             name: tenant?.name || 'Smart LMS',
             subdomain: tenant?.subdomain || 'org',
             logo: tenant?.logo,
-            role: session.user.role.toLowerCase().replace('_', ' ')
+            role: (session.user.role as string).toLowerCase().replaceAll('_', ' ')
           }}
         />
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -53,7 +56,7 @@ export default async function DashboardLayout({
       <LiveClassNotificationTrigger />
       <OnboardingTrigger
         tenantId={session.user.tenantId}
-        show={!tenant?.onboardingCompleted && (session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN')}
+        show={!tenant?.onboardingCompleted && (['ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN'].includes(session.user.role as string))}
       />
       <BottomNav />
     </div>

@@ -78,7 +78,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
     rawNext && isLessonUnlocked(rawNext.id, prereqMap, completedLessonIds) ? rawNext : null;
 
   return (
-    <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+    <div className="min-h-screen bg-transparent pb-20 md:pb-0">
       <Container className="py-8">
         <HeartbeatTrigger enrollmentId={enrollment.id} lessonId={lesson.id} />
         <div className="mb-6">

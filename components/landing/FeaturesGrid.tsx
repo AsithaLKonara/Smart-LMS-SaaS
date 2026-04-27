@@ -25,8 +25,8 @@ const features = [
 export function FeaturesGrid() {
     return (
         <section className="w-full bg-transparent py-16 md:py-[73px] flex flex-col items-center gap-8 md:gap-[33px]">
-            <div className="max-w-[1280px] px-6 md:px-[60px] lg:px-[120px] w-full flex flex-col items-center gap-8 md:gap-[33px]">
-                <h2 className="text-white font-bold font-heading text-2xl md:text-[32px] tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="max-w-[1280px] mx-auto px-6 md:px-[60px] lg:px-[120px] w-full flex flex-col items-center gap-8 md:gap-[33px]">
+                <h2 className="text-white font-bold font-heading text-2xl md:text-[32px] text-center tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
                     Premium Learning Experience
                 </h2>
 
@@ -55,7 +55,7 @@ export function FeaturesGrid() {
                             </div>
 
                             {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 to-background-primary opacity-90 pointer-events-none" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-90 pointer-events-none" />
 
                             <div className="relative z-10 flex flex-col gap-2 transform group-hover:translate-y-[-4px] transition-transform duration-300">
                                 <h3 className="text-white font-bold text-[18px] tracking-tight font-heading">

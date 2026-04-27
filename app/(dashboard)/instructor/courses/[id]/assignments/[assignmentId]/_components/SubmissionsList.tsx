@@ -67,7 +67,7 @@ export const SubmissionsList = ({
                         </div>
                     </div>
 
-                    <div className="bg-background-primary p-3 rounded mb-4 border border-white/5">
+                    <div className="bg-transparent backdrop-blur-md p-3 rounded mb-4 border border-white/5">
                         {submission.content && (
                             <div className="mb-2">
                                 <p className="text-xs text-text-secondary font-medium mb-1">TEXT SUBMISSION</p>

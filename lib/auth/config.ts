@@ -17,10 +17,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        const tenantId = (credentials.tenantId as string) === 'undefined' || (credentials.tenantId as string) === '' 
+          ? undefined 
+          : credentials.tenantId as string;
+
         const user = await authenticateUser(
           credentials.email as string,
           credentials.password as string,
-          credentials.tenantId as string | undefined
+          tenantId
         );
 
         if (!user) {

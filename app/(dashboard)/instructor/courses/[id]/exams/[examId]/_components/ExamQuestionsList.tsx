@@ -111,7 +111,7 @@ export const ExamQuestionsList = ({
 
 
     return (
-        <div className="mt-6 border bg-background-primary rounded-md p-4 border-white/10 relative">
+        <div className="mt-6 border bg-transparent backdrop-blur-md rounded-md p-4 border-white/10 relative">
             {isLoading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded-md">
                     <Loader2 className="h-6 w-6 animate-spin text-accent-cyan" />

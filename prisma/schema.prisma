@@ -29,6 +29,7 @@ enum Status {
 enum RoleType {
   SUPER_ADMIN
   ADMIN
+  TENANT_ADMIN
   INSTRUCTOR
   STUDENT
 }
@@ -694,5 +695,16 @@ model Streak {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("streaks")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_reset_tokens")
 }
 

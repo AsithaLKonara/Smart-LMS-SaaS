@@ -14,13 +14,13 @@ import {
     Zap
 } from "lucide-react";
 import { TextGradient } from "@/components/ui/TextGradient";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils/cn";
 
 export default async function AdminDashboardPage() {
     const session = await auth();
     const role = session?.user?.role;
 
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    if (role !== "ADMIN" && role !== "TENANT_ADMIN" && role !== "SUPER_ADMIN") {
         return redirect("/dashboard");
     }
 
@@ -50,27 +50,27 @@ export default async function AdminDashboardPage() {
                 {
                     label: 'Total Tenants',
                     value: stats.totalTenants,
-                    icon: Building2,
+                    icon: <Building2 className="w-6 h-6" />,
                     color: 'cyan',
                     change: { value: '+3 new', trend: 'up' }
                 },
                 {
                     label: 'Global Users',
                     value: stats.totalUsers.toLocaleString(),
-                    icon: Users,
+                    icon: <Users className="w-6 h-6" />,
                     color: 'purple',
                     change: { value: '+450', trend: 'up' }
                 },
                 {
                     label: 'System Revenue',
                     value: `$${stats.totalRevenue.toLocaleString()}`,
-                    icon: DollarSign,
+                    icon: <DollarSign className="w-6 h-6" />,
                     color: 'orange'
                 },
                 {
                     label: 'Global enrollments',
                     value: stats.totalEnrollments.toLocaleString(),
-                    icon: GraduationCap,
+                    icon: <GraduationCap className="w-6 h-6" />,
                     color: 'green'
                 }
             ]} />
@@ -130,6 +130,3 @@ export default async function AdminDashboardPage() {
     );
 }
 
-function cn(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
-}

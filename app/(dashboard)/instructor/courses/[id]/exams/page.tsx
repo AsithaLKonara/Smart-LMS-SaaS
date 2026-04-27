@@ -44,7 +44,7 @@ export default async function ExamsPage({
     }
 
     return (
-        <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+        <div className="min-h-screen bg-transparent pb-20 md:pb-0">
             <Container className="py-8">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col gap-y-2">

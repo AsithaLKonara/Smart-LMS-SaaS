@@ -12,8 +12,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background-primary flex items-center justify-center py-12 px-4 relative overflow-hidden">
-      <BackgroundVideo />
+    <div className="min-h-screen bg-transparent flex items-center justify-center py-12 px-4 relative overflow-hidden">
+      <BackgroundVideo src="/videos/0428.mp4" videoOpacity="opacity-25" overlayOpacity="bg-black/60" />
       {/* Background Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-purple/10 blur-[120px] rounded-full -z-10 animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-cyan/10 blur-[120px] rounded-full -z-10 animate-pulse" />

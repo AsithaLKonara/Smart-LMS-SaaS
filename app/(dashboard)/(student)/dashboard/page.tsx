@@ -20,7 +20,7 @@ import {
   Trophy,
   Zap
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FadeIn } from '@/components/ui/FadeIn';
 import { getStreak, getBadges } from '@/lib/db/queries/gamification';
 import { StreakCounter } from '@/components/features/gamification/StreakCounter';
 import { BadgeList } from '@/components/features/gamification/BadgeList';
@@ -88,13 +88,12 @@ export default async function StudentDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+    <div className="min-h-screen bg-transparent pb-20 md:pb-0">
       <div className="flex flex-col gap-10">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+          <FadeIn
+            direction="right"
             className="flex flex-col gap-2"
           >
             <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-heading tracking-tight">
@@ -103,7 +102,7 @@ export default async function StudentDashboardPage() {
             <p className="text-text-secondary text-lg">
               You're doing great! Here's what's happening with your learning today.
             </p>
-          </motion.div>
+          </FadeIn>
           <div className="flex items-center gap-4">
             <StreakCounter count={streak?.currentStreak || 0} />
             <Button variant="premium" size="sm" className="hidden border-none md:flex shadow-neon-purple">
@@ -117,27 +116,27 @@ export default async function StudentDashboardPage() {
           {
             label: 'In Progress',
             value: coursesInProgress,
-            icon: Activity,
+            icon: <Activity className="w-6 h-6" />,
             color: 'cyan',
             change: { value: '+2 this week', trend: 'up' }
           },
           {
             label: 'Completed',
             value: completedCourses,
-            icon: Trophy,
+            icon: <Trophy className="w-6 h-6" />,
             color: 'purple'
           },
           {
             label: 'Avg. Progress',
             value: `${Math.round(totalProgress)}%`,
-            icon: GraduationCap,
+            icon: <GraduationCap className="w-6 h-6" />,
             color: 'green',
             change: { value: 'Steady', trend: 'up' }
           },
           {
             label: 'Study Time',
             value: formatStudyTime(totalStudySeconds),
-            icon: Clock,
+            icon: <Clock className="w-6 h-6" />,
             color: 'orange'
           }
         ]} />

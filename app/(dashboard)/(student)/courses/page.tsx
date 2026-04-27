@@ -31,7 +31,7 @@ export default async function CoursesPage() {
   const availableCourses = courses.filter((c) => !enrolledCourseIds.has(c.id));
 
   return (
-    <div className="min-h-screen bg-background-primary pb-20 md:pb-0">
+    <div className="min-h-screen bg-transparent pb-20 md:pb-0">
       <Container className="py-8">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-2 font-heading">
