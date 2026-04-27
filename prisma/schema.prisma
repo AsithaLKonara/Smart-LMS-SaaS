@@ -162,6 +162,7 @@ model User {
   liveClassAttendances LiveClassAttendance[]
   gradeHistoryActs SubmissionGradeHistory[] @relation("GradeHistoryActor")
   courseAuditLogs CourseAuditLog[] @relation("CourseAuditActor")
+  aiConversations AIConversation[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -708,3 +709,19 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+
+model AIConversation {
+  id               String   @id @default(cuid())
+  userId           String
+  tenantId         String
+  sessionId        String
+  userMessage      String   @db.Text
+  assistantMessage String   @db.Text
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sessionId])
+  @@index([tenantId])
+  @@map("ai_conversations")
+}
