@@ -23,6 +23,7 @@ import { Integrations } from "@/components/landing/Integrations";
 import { Pricing } from "@/components/landing/Pricing";
 import { FAQ } from "@/components/landing/FAQ";
 import { CertificationCTA } from "@/components/landing/CertificationCTA";
+import { ContactSection } from "@/components/landing/ContactSection";
 import { PublicChatWidget } from "@/components/features/ai/PublicChatWidget";
 
 export default function Home() {
@@ -163,7 +164,10 @@ export default function Home() {
       {/* 12. Final CTA Section */}
       <CertificationCTA />
 
-      {/* 13. Footer Section */}
+      {/* 13. Contact Section */}
+      <ContactSection />
+
+      {/* 14. Footer Section */}
       <Footer />
 
       {/* AI Chat Widget — floating bottom-right */}
