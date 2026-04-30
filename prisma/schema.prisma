@@ -124,6 +124,7 @@ model Tenant {
   usageMetrics   UsageMetric[]
   messageThreads MessageThread[]
   assets         Asset[]
+  supportTickets SupportTicket[]
 
   @@index([subdomain])
   @@map("tenants")
@@ -163,6 +164,8 @@ model User {
   gradeHistoryActs SubmissionGradeHistory[] @relation("GradeHistoryActor")
   courseAuditLogs CourseAuditLog[] @relation("CourseAuditActor")
   aiConversations AIConversation[]
+  supportTickets  SupportTicket[]
+  supportMessages SupportMessage[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -710,6 +713,7 @@ model PasswordResetToken {
 }
 
 
+
 model AIConversation {
   id               String   @id @default(cuid())
   userId           String
@@ -724,4 +728,70 @@ model AIConversation {
   @@index([userId, sessionId])
   @@index([tenantId])
   @@map("ai_conversations")
+}
+
+// ============================================
+// SUPPORT & LEADS MODELS
+// ============================================
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  tenantId    String
+  userId      String
+  subject     String
+  description String         @db.Text
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  body      String   @db.Text
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("support_messages")
+}
+
+model ContactLead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  message   String?  @db.Text
+  type      String   @default("GENERAL") // DEMO | WAITLIST | GENERAL
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("contact_leads")
 }
