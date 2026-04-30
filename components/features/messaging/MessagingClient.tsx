@@ -5,18 +5,35 @@ import { ThreadList } from './ThreadList';
 import { MessageView } from './MessageView';
 import { toast } from 'sonner';
 
+interface Thread {
+  id: string;
+  title: string | null;
+  scope: string;
+  updatedAt: string | Date;
+  lastMessage: string;
+  members: Array<{ user: { name: string; avatar: string | null } }>;
+}
+
+interface Message {
+  id: string;
+  body: string;
+  senderId: string;
+  createdAt: string | Date;
+  sender: { name: string; avatar: string | null };
+}
+
 interface MessagingClientProps {
-  initialThreads: any[];
+  initialThreads: Thread[];
   currentUserId: string;
   tenantId: string;
 }
 
 export function MessagingClient({ initialThreads, currentUserId, tenantId }: MessagingClientProps) {
-  const [threads, setThreads] = useState(initialThreads);
+  const [threads, setThreads] = useState<Thread[]>(initialThreads);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(
     initialThreads.length > 0 ? initialThreads[0].id : null
   );
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const activeThread = threads.find((t) => t.id === activeThreadId);
@@ -24,8 +41,41 @@ export function MessagingClient({ initialThreads, currentUserId, tenantId }: Mes
   useEffect(() => {
     if (activeThreadId) {
       fetchMessages(activeThreadId);
+
+      // Subscribe to real-time updates
+      const subscribe = async () => {
+        const { pusherClient } = await import('@/lib/pusher');
+        const channel = pusherClient.subscribe(`thread-${activeThreadId}`);
+
+        channel.bind('new-message', (data: Message) => {
+          // If message is from others, add to state
+          if (data.senderId !== currentUserId) {
+            setMessages((prev) => {
+                // Check if message already exists (to avoid duplicates from optimistic updates if any)
+                if (prev.find(m => m.id === data.id)) return prev;
+                return [...prev, data];
+            });
+            
+            // Also update thread list last message
+            setThreads((prev) => 
+                prev.map((t) => 
+                  t.id === activeThreadId ? { ...t, lastMessage: data.body, updatedAt: new Date() } : t
+                ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              );
+          }
+        });
+
+        return () => {
+          pusherClient.unsubscribe(`thread-${activeThreadId}`);
+        };
+      };
+
+      const cleanupPromise = subscribe();
+      return () => {
+        cleanupPromise.then(cleanup => cleanup && cleanup());
+      };
     }
-  }, [activeThreadId]);
+  }, [activeThreadId, currentUserId]);
 
   const fetchMessages = async (threadId: string) => {
     setIsLoading(true);
@@ -53,11 +103,7 @@ export function MessagingClient({ initialThreads, currentUserId, tenantId }: Mes
       });
       const json = await res.json();
       if (json.success && json.data) {
-        const newMessage = {
-          ...json.data,
-          sender: { name: 'You', avatar: null } // Local optimistic update detail
-        };
-        setMessages((prev) => [...prev, newMessage]);
+        setMessages((prev) => [...prev, json.data]);
         // Update threads list with last message
         setThreads((prev) => 
           prev.map((t) => 

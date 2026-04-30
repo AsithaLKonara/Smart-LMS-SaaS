@@ -20,15 +20,32 @@ export async function assertTenantOperational(
   return { ok: true };
 }
 
+export const PLAN_LIMITS = {
+    FREE: { courses: 3, students: 50 },
+    PRO: { courses: 50, students: 500 }, // Adjust as needed
+    ENTERPRISE: { courses: 999999, students: 999999 },
+};
+
 /**
- * Count active users in tenant vs BillingProfile.seatLimit.
+ * Count active users in tenant vs BillingProfile.seatLimit or Plan limits.
  */
 export async function assertSeatAvailable(tenantId: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { plan: true }
+  });
+  
   const profile = await prisma.billingProfile.findUnique({
     where: { tenantId },
     select: { seatLimit: true, subscriptionStatus: true, graceEndsAt: true },
   });
-  const limit = profile?.seatLimit ?? 10;
+
+  const plan = tenant?.plan || 'FREE';
+  const planLimit = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS].students;
+  const profileLimit = profile?.seatLimit || 10;
+  
+  const limit = Math.max(planLimit, profileLimit);
+  
   const status = profile?.subscriptionStatus ?? 'active';
 
   if (status === 'canceled') {
@@ -38,9 +55,28 @@ export async function assertSeatAvailable(tenantId: string): Promise<{ ok: true 
     return { ok: false, message: 'Billing grace period expired' };
   }
 
-  const count = await prisma.user.count({ where: { tenantId } });
+  const count = await prisma.user.count({ where: { tenantId, role: 'STUDENT' } });
   if (count >= limit) {
-    return { ok: false, message: 'Seat limit reached for this organization' };
+    return { ok: false, message: `Student seat limit reached (${limit}). Please upgrade your plan.` };
   }
   return { ok: true };
+}
+
+/**
+ * Check if tenant can create more courses.
+ */
+export async function assertCourseLimit(tenantId: string): Promise<{ ok: true } | { ok: false; message: string }> {
+    const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { plan: true }
+    });
+
+    const plan = tenant?.plan || 'FREE';
+    const limit = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS].courses;
+
+    const count = await prisma.course.count({ where: { tenantId } });
+    if (count >= limit) {
+        return { ok: false, message: `Course limit reached for ${plan} plan (${limit}). Please upgrade.` };
+    }
+    return { ok: true };
 }
