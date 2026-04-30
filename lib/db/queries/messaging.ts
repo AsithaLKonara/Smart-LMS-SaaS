@@ -130,6 +130,11 @@ export async function createMessage(
       body,
       attachmentUrl: attachmentUrl || null,
     },
+    include: {
+      sender: {
+        select: { id: true, name: true, avatar: true },
+      },
+    },
   });
 
   await prisma.messageThread.update({

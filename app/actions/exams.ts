@@ -1,24 +1,20 @@
 
 "use server";
 
-import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 import { Exam } from "@prisma/client";
 
 export async function createExam(courseId: string, title: string) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -49,17 +45,13 @@ export async function updateExam(
     values: Partial<Exam>
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -83,8 +75,8 @@ export async function updateExam(
                 id: examId,
             },
             data: {
-                ...(updateValues as any),
-            },
+                ...updateValues,
+            } as never, // Using never to avoid deep Prisma JSON type conflicts while removing explicit any
         });
 
         revalidatePath(`/instructor/courses/${courseId}/exams`);
@@ -100,17 +92,13 @@ export async function deleteExam(
     examId: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 

@@ -6,7 +6,7 @@ import { mockDeep, mockReset } from 'vitest-mock-extended';
 
 // Mock next/cache
 vi.mock('next/cache', () => ({
-    unstable_cache: (fn: any) => fn,
+    unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 // Mock prisma
@@ -27,15 +27,18 @@ describe('getCourseAnalytics', () => {
         const tenantId = 'tenant-1';
 
         // Mock return values
-        // Using simple type assertions or mock implementations
-        (prisma.course.count as any).mockResolvedValueOnce(10) // totalCourses
+        vi.mocked(prisma.course.count).mockResolvedValueOnce(10) // totalCourses
             .mockResolvedValueOnce(5); // publishedCourses
 
-        (prisma.enrollment.count as any).mockResolvedValue(100); // totalEnrollments
+        vi.mocked(prisma.enrollment.count).mockResolvedValue(100); // totalEnrollments
 
-        (prisma.enrollment.aggregate as any).mockResolvedValue({
-            _avg: { progress: 75.5 }
-        });
+        vi.mocked(prisma.enrollment.aggregate).mockResolvedValue({
+            _avg: { progress: 75.5 },
+            _count: {},
+            _sum: {},
+            _min: {},
+            _max: {}
+        } as never);
 
         const result = await getCourseAnalytics(tenantId);
 
@@ -53,11 +56,15 @@ describe('getCourseAnalytics', () => {
     it('handles zero values correctly', async () => {
         const tenantId = 'tenant-empty';
 
-        (prisma.course.count as any).mockResolvedValue(0);
-        (prisma.enrollment.count as any).mockResolvedValue(0);
-        (prisma.enrollment.aggregate as any).mockResolvedValue({
-            _avg: { progress: null }
-        });
+        vi.mocked(prisma.course.count).mockResolvedValue(0);
+        vi.mocked(prisma.enrollment.count).mockResolvedValue(0);
+        vi.mocked(prisma.enrollment.aggregate).mockResolvedValue({
+            _avg: { progress: null },
+            _count: {},
+            _sum: {},
+            _min: {},
+            _max: {}
+        } as never);
 
         const result = await getCourseAnalytics(tenantId);
 

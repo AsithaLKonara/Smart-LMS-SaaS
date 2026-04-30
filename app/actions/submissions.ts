@@ -1,8 +1,8 @@
 
 "use server";
 
-import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 import { hasPermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/constants/permissions";
@@ -16,15 +16,16 @@ export async function submitAssignment(
     }
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const assignment = await prisma.assignment.findFirst({
-            where: { id: assignmentId, courseId },
+            where: { 
+                id: assignmentId, 
+                course: { 
+                    id: courseId,
+                    tenantId 
+                } 
+            },
             select: {
                 dueDate: true,
                 allowLate: true,
@@ -101,14 +102,7 @@ export async function gradeSubmission(
     feedback: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-        const role = session?.user?.role;
-
-        if (!userId || !tenantId || !role) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId, role } = await getSessionContext();
 
         const course = await prisma.course.findFirst({
             where: { id: courseId, tenantId },

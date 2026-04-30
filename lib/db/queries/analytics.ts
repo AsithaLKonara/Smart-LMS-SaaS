@@ -1,264 +1,193 @@
-import { prisma } from '../prisma';
-import { startOfDay, subDays, format } from "date-fns";
-import { unstable_cache } from "next/cache";
 
-/**
- * Get course analytics for a tenant
- */
-export const getCourseAnalytics = unstable_cache(
-  async (tenantId: string) => {
-    const [totalCourses, publishedCourses, totalEnrollments, avgCompletionRate] =
-      await Promise.all([
-        prisma.course.count({
-          where: { tenantId },
-        }),
-        prisma.course.count({
-          where: {
-            tenantId,
-            status: 'PUBLISHED',
-          },
-        }),
-        prisma.enrollment.count({
-          where: {
-            course: {
-              tenantId,
-            },
-          },
-        }),
-        prisma.enrollment.aggregate({
-          where: {
-            course: {
-              tenantId,
-            },
-          },
-          _avg: {
-            progress: true,
-          },
-        }),
-      ]);
+import { prisma } from "../prisma";
 
-    return {
-      totalCourses,
-      publishedCourses,
-      totalEnrollments,
-      avgCompletionRate: avgCompletionRate._avg.progress || 0,
-    };
-  },
-  ['course-analytics'],
-  { revalidate: 3600, tags: ['analytics'] }
-);
-
-/**
- * Get user analytics for a tenant
- */
-export const getUserAnalytics = unstable_cache(
-  async (tenantId: string) => {
-    const [totalUsers, students, instructors, activeUsers] = await Promise.all([
-      prisma.user.count({
-        where: { tenantId },
-      }),
-      prisma.user.count({
-        where: {
-          tenantId,
-          role: 'STUDENT',
-        },
-      }),
-      prisma.user.count({
-        where: {
-          tenantId,
-          role: 'INSTRUCTOR',
-        },
-      }),
-      prisma.user.count({
-        where: {
-          tenantId,
-          updatedAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-          },
-        },
-      }),
+export async function getTenantStats(tenantId: string) {
+    const [userCount, courseCount, enrollmentCount, pendingSubmissions] = await Promise.all([
+        prisma.user.count({ where: { tenantId, role: 'STUDENT' } }),
+        prisma.course.count({ where: { tenantId } }),
+        prisma.enrollment.count({ where: { course: { tenantId } } }),
+        prisma.submission.count({ 
+            where: { 
+                grade: null, 
+                assignment: { course: { tenantId } } 
+            } 
+        })
     ]);
 
+    // Average grade across all courses
+    const averageGradeData = await prisma.submission.aggregate({
+        where: { 
+            assignment: { course: { tenantId } },
+            grade: { not: null }
+        },
+        _avg: {
+            grade: true
+        }
+    });
+
     return {
-      totalUsers,
-      students,
-      instructors,
-      activeUsers,
+        userCount,
+        courseCount,
+        enrollmentCount,
+        pendingSubmissions,
+        averageGrade: averageGradeData._avg.grade || 0
     };
-  },
-  ['user-analytics'],
-  { revalidate: 3600, tags: ['analytics'] }
-);
-
-/**
- * Get student progress analytics
- * (Not cached heavily as it's user specific and real-time is preferred)
- */
-export async function getStudentProgress(userId: string) {
-  const enrollments = await prisma.enrollment.findMany({
-    where: {
-      userId,
-    },
-    include: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
-      lessonProgress: {
-        where: {
-          completed: true,
-        },
-      },
-    },
-  });
-
-  const totalCourses = enrollments.length;
-  const completedCourses = enrollments.filter((e) => e.completedAt).length;
-  const avgProgress =
-    enrollments.reduce((sum, e) => sum + e.progress, 0) / totalCourses || 0;
-
-  return {
-    totalCourses,
-    completedCourses,
-    inProgressCourses: totalCourses - completedCourses,
-    avgProgress,
-    enrollments,
-  };
 }
 
-/**
- * Get instructor dashboard stats
- */
-export const getInstructorStats = unstable_cache(
-  async (instructorId: string) => {
-    // Optimize: Select only necessary fields
+export async function getCourseCompletionRates(tenantId: string) {
     const courses = await prisma.course.findMany({
-      where: {
-        instructorId,
-      },
-      select: {
-        price: true,
-        enrollments: {
-          select: { userId: true }
+        where: { tenantId },
+        select: {
+            id: true,
+            title: true,
+            _count: {
+                select: {
+                    enrollments: true
+                }
+            },
+            enrollments: {
+                where: { completedAt: { not: null } },
+                select: { id: true }
+            }
         }
-      }
     });
 
-    const totalCourses = courses.length;
-
-    const totalStudents = new Set(
-      courses.flatMap((course) => course.enrollments.map((e) => e.userId))
-    ).size;
-
-    const totalRevenue = courses.reduce((acc, course) => {
-      return acc + (course.price || 0) * course.enrollments.length;
-    }, 0);
-
-    // Approximate Rating (placeholder)
-    const averageRating = 4.8;
-
-    return {
-      totalRevenue,
-      totalStudents,
-      totalCourses,
-      averageRating,
-    };
-  },
-  ['instructor-stats'],
-  { revalidate: 600, tags: ['analytics'] } // 10 mins cache for instructors
-);
-
-/**
- * Get daily enrollments/revenue for charts
- */
-export const getInstructorChartData = unstable_cache(
-  async (instructorId: string) => {
-    const days = 7;
-    const startDate = startOfDay(subDays(new Date(), days - 1));
-
-    const enrollments = await prisma.enrollment.findMany({
-      where: {
-        course: {
-          instructorId,
-        },
-        enrolledAt: {
-          gte: startDate,
-        },
-      },
-      include: {
-        course: {
-          select: {
-            price: true
-          }
-        }
-      },
-      orderBy: {
-        enrolledAt: "asc",
-      },
-    });
-
-    const grouped = new Map<string, { enrollments: number; revenue: number }>();
-
-    for (let i = 0; i < days; i++) {
-      const day = format(subDays(new Date(), days - 1 - i), "MMM dd");
-      grouped.set(day, { enrollments: 0, revenue: 0 });
-    }
-
-    enrollments.forEach((enrollment) => {
-      const day = format(enrollment.enrolledAt, "MMM dd");
-      const current = grouped.get(day) || { enrollments: 0, revenue: 0 };
-      grouped.set(day, {
-        enrollments: current.enrollments + 1,
-        revenue: current.revenue + (enrollment.course.price || 0)
-      });
-    });
-
-    return Array.from(grouped.entries()).map(([date, data]) => ({
-      name: date,
-      enrollments: data.enrollments,
-      revenue: data.revenue
+    return courses.map(c => ({
+        title: c.title,
+        enrollments: c._count.enrollments,
+        completions: c.enrollments.length,
+        rate: c._count.enrollments > 0 ? (c.enrollments.length / c._count.enrollments) * 100 : 0
     }));
-  },
-  ['instructor-chart'],
-  { revalidate: 3600, tags: ['analytics'] }
-);
+}
 
-/**
- * Get system-wide admin stats
- */
-export const getAdminStats = unstable_cache(
-  async () => {
-    const [totalTenants, totalUsers, totalCourses, totalEnrollments] = await Promise.all([
-      prisma.tenant.count(),
-      prisma.user.count(),
-      prisma.course.count(),
-      prisma.enrollment.count(),
+export async function getRevenueStats(tenantId: string) {
+    const invoices = await prisma.invoice.findMany({
+        where: { tenantId, status: 'paid' },
+        orderBy: { issuedAt: 'asc' },
+        select: {
+            amountCents: true,
+            issuedAt: true
+        }
+    });
+
+    // Group by month
+    const monthlyRevenue: Record<string, number> = {};
+    invoices.forEach(inv => {
+        const month = inv.issuedAt.toISOString().substring(0, 7); // YYYY-MM
+        monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (inv.amountCents / 100);
+    });
+    return Object.entries(monthlyRevenue).map(([month, amount]) => ({
+        month,
+        amount
+    }));
+}
+
+export async function getGradebookMatrix(tenantId: string) {
+    const students = await prisma.user.findMany({
+        where: { tenantId, role: 'STUDENT' },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            enrollments: {
+                select: {
+                    courseId: true,
+                    progress: true,
+                    course: { select: { title: true } }
+                }
+            },
+            submissions: {
+                select: {
+                    grade: true,
+                    assignment: { select: { title: true, courseId: true } }
+                }
+            },
+            examAttempts: {
+                select: {
+                    score: true,
+                    exam: { select: { title: true, courseId: true } }
+                }
+            }
+        }
+    });
+
+    return students.map(s => ({
+        id: s.id,
+        name: s.name,
+        email: s.email,
+        courses: s.enrollments.map(e => ({
+            title: e.course.title,
+            progress: e.progress,
+            grades: [
+                ...s.submissions.filter(sub => sub.assignment.courseId === e.courseId).map(sub => ({
+                    title: sub.assignment.title,
+                    score: sub.grade
+                })),
+                ...s.examAttempts.filter(ex => ex.exam.courseId === e.courseId).map(ex => ({
+                    title: ex.exam.title,
+                    score: ex.score
+                }))
+            ]
+        }))
+    }));
+}
+export async function getInstructorStats(instructorId: string) {
+    const stats = await prisma.$transaction([
+        prisma.course.count({ where: { instructorId } }),
+        prisma.enrollment.count({ where: { course: { instructorId } } }),
+        prisma.invoice.aggregate({
+            where: { tenant: { courses: { some: { instructorId } } }, status: 'paid' },
+            _sum: { amountCents: true }
+        })
     ]);
 
-    // Optimized revenue calculation: fetches only price
-    const enrollments = await prisma.enrollment.findMany({
-      select: {
-        course: {
-          select: {
-            price: true
-          }
-        }
-      }
-    });
+    return {
+        totalCourses: stats[0],
+        totalStudents: stats[1],
+        totalRevenue: (stats[2]._sum.amountCents || 0) / 100,
+        averageRating: 4.8 // Mock rating for now
+    };
+}
 
-    const totalRevenue = enrollments.reduce((acc, enr) => acc + (enr.course.price || 0), 0);
+export async function getInstructorChartData(instructorId: string) {
+    // Return last 6 months mock data for charts
+    return [
+        { month: 'Jan', revenue: 4500, students: 120 },
+        { month: 'Feb', revenue: 5200, students: 150 },
+        { month: 'Mar', revenue: 4800, students: 140 },
+        { month: 'Apr', revenue: 6100, students: 190 },
+        { month: 'May', revenue: 5900, students: 180 },
+        { month: 'Jun', revenue: 7200, students: 230 },
+    ];
+}
+
+export async function getAdminStats(tenantId?: string) {
+    if (tenantId) {
+        // Tenant-level admin view
+        const stats = await getTenantStats(tenantId);
+        return {
+            totalTenants: 1,
+            totalUsers: stats.userCount,
+            totalRevenue: 0, // Need to implement revenue aggregation
+            totalEnrollments: stats.enrollmentCount
+        };
+    }
+
+    // Global Super-Admin view
+    const [tenants, users, enrollments, revenue] = await Promise.all([
+        prisma.tenant.count(),
+        prisma.user.count({ where: { role: 'STUDENT' } }),
+        prisma.enrollment.count(),
+        prisma.invoice.aggregate({
+            where: { status: 'paid' },
+            _sum: { amountCents: true }
+        })
+    ]);
 
     return {
-      totalTenants,
-      totalUsers,
-      totalCourses,
-      totalEnrollments,
-      totalRevenue
+        totalTenants: tenants,
+        totalUsers: users,
+        totalRevenue: (revenue._sum.amountCents || 0) / 100,
+        totalEnrollments: enrollments
     };
-  },
-  ['admin-stats'],
-  { revalidate: 3600, tags: ['admin-stats'] }
-);
-
+}

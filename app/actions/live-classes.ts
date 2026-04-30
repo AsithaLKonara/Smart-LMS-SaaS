@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 import { Platform } from "@prisma/client";
 import { hasPermission } from "@/lib/auth/permissions";
@@ -19,14 +19,7 @@ export async function createLiveClass(
     }
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-        const role = session?.user?.role;
-
-        if (!userId || !tenantId || !role) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId, role } = await getSessionContext();
 
         if (!hasPermission({ id: userId, role, tenantId }, PERMISSIONS.LIVE_CREATE)) {
             throw new Error("Unauthorized");
@@ -68,14 +61,7 @@ export async function deleteLiveClass(
     liveClassId: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-        const role = session?.user?.role;
-
-        if (!userId || !tenantId || !role) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId, role } = await getSessionContext();
 
         if (!hasPermission({ id: userId, role, tenantId }, PERMISSIONS.LIVE_CREATE)) {
             throw new Error("Unauthorized");

@@ -1,8 +1,8 @@
 
 "use server";
 
-import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 
 export async function createAssignment(
@@ -16,17 +16,13 @@ export async function createAssignment(
     }
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -65,17 +61,13 @@ export async function updateAssignment(
     }
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -113,17 +105,13 @@ export async function deleteAssignment(
     assignmentId: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
+        const { userId, tenantId } = await getSessionContext();
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const courseOwner = await prisma.course.findUnique({
+        const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 

@@ -34,9 +34,10 @@ export async function changePassword(data: { current: string; new: string }) {
         });
 
         return { success: true };
-    } catch (error: any) {
-        console.error("[CHANGE_PASSWORD]", error.message);
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Internal Error";
+        console.error("[CHANGE_PASSWORD]", message);
+        return { success: false, error: message };
     }
 }
 
@@ -57,9 +58,10 @@ export async function updateProfile(data: { name?: string; avatar?: string }) {
 
         revalidatePath("/profile");
         return { success: true };
-    } catch (error: any) {
-        console.error("[UPDATE_PROFILE]", error.message);
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Internal Error";
+        console.error("[UPDATE_PROFILE]", message);
+        return { success: false, error: message };
     }
 }
 
@@ -77,8 +79,9 @@ export async function toggleTwoFactor(enabled: boolean) {
 
         revalidatePath("/profile");
         return { success: true };
-    } catch (error: any) {
-        console.error("[TOGGLE_2FA]", error.message);
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Internal Error";
+        console.error("[TOGGLE_2FA]", message);
+        return { success: false, error: message };
     }
 }

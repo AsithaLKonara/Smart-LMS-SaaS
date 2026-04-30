@@ -31,16 +31,16 @@ describe('updateLessonProgress', () => {
         const userId = 'user-1';
 
         // Mock upsert result
-        (prisma.lessonProgress.upsert as any).mockResolvedValue({
+        vi.mocked(prisma.lessonProgress.upsert).mockResolvedValue({
             id: 'prog-1',
             enrollmentId,
             lessonId,
             completed: true,
             enrollment: { userId }
-        });
+        } as never);
 
         // Mock completed count = 1
-        (prisma.lessonProgress.count as any).mockResolvedValue(1);
+        vi.mocked(prisma.lessonProgress.count).mockResolvedValue(1);
 
         await updateLessonProgress(enrollmentId, lessonId, { completed: true });
 
@@ -53,16 +53,16 @@ describe('updateLessonProgress', () => {
         const userId = 'user-1';
 
         // Mock upsert result
-        (prisma.lessonProgress.upsert as any).mockResolvedValue({
+        vi.mocked(prisma.lessonProgress.upsert).mockResolvedValue({
             id: 'prog-2',
             enrollmentId,
             lessonId,
             completed: true,
             enrollment: { userId }
-        });
+        } as never);
 
         // Mock completed count > 1
-        (prisma.lessonProgress.count as any).mockResolvedValue(2);
+        vi.mocked(prisma.lessonProgress.count).mockResolvedValue(2);
 
         await updateLessonProgress(enrollmentId, lessonId, { completed: true });
 

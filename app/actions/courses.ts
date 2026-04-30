@@ -1,25 +1,24 @@
 "use server";
 
-import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 import { Course, Lesson, Module } from "@prisma/client";
 import { transitionCourseStatus, assertCourseStructuralEditable, assertLessonUpdateAllowed } from "@/lib/db/queries/course-lifecycle";
-import { assertTenantOperational } from "@/lib/billing/seats";
+import { assertTenantOperational, assertCourseLimit } from "@/lib/billing/seats";
 
 export async function createCourse(data: { title: string }) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-
-        if (!userId || !tenantId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const op = await assertTenantOperational(tenantId);
         if (!op.ok) {
             throw new Error(op.message);
+        }
+
+        const limitCheck = await assertCourseLimit(tenantId);
+        if (!limitCheck.ok) {
+            throw new Error(limitCheck.message);
         }
 
         const course = await prisma.course.create({
@@ -33,7 +32,7 @@ export async function createCourse(data: { title: string }) {
         revalidatePath("/instructor/courses");
         return course;
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[COURSES]", error);
         throw new Error("Internal Error");
     }
@@ -44,15 +43,10 @@ export async function updateCourse(
     values: Partial<Course>
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const existing = await prisma.course.findFirst({
-            where: { id: courseId, instructorId: userId },
+            where: { id: courseId, instructorId: userId, tenantId },
             select: { status: true, tenantId: true },
         });
         if (!existing) {
@@ -76,7 +70,7 @@ export async function updateCourse(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return course;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[COURSE_ID]", error);
         throw new Error("Internal Error");
     }
@@ -84,13 +78,7 @@ export async function updateCourse(
 
 export async function publishCourse(courseId: string) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-
-        if (!userId || !tenantId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const course = await prisma.course.findFirst({
             where: {
@@ -108,7 +96,7 @@ export async function publishCourse(courseId: string) {
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return updatedCourse;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[COURSE_PUBLISH]", error);
         throw new Error("Internal Error");
     }
@@ -116,13 +104,7 @@ export async function publishCourse(courseId: string) {
 
 export async function unpublishCourse(courseId: string) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        const tenantId = session?.user?.tenantId;
-
-        if (!userId || !tenantId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const course = await prisma.course.findFirst({
             where: { id: courseId, instructorId: userId, tenantId },
@@ -136,7 +118,7 @@ export async function unpublishCourse(courseId: string) {
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return updated;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[COURSE_UNPUBLISH]", error);
         throw new Error("Internal Error");
     }
@@ -149,17 +131,13 @@ export async function unpublishCourse(courseId: string) {
 
 export async function createModule(courseId: string, title: string) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -180,7 +158,7 @@ export async function createModule(courseId: string, title: string) {
 
         const newOrder = lastModule ? lastModule.order + 1 : 1;
 
-        const module = await prisma.module.create({
+        const mod = await prisma.module.create({
             data: {
                 title,
                 courseId,
@@ -189,8 +167,8 @@ export async function createModule(courseId: string, title: string) {
         });
 
         revalidatePath(`/instructor/courses/${courseId}`);
-        return module;
-    } catch (error) {
+        return mod;
+    } catch (error: unknown) {
         console.log("[CREATE_MODULE]", error);
         throw new Error("Internal Error");
     }
@@ -202,17 +180,13 @@ export async function updateModule(
     values: { title: string }
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -223,7 +197,7 @@ export async function updateModule(
             throw new Error("Course is archived");
         }
 
-        const module = await prisma.module.update({
+        const mod = await prisma.module.update({
             where: {
                 id: moduleId,
                 courseId: courseId,
@@ -234,8 +208,8 @@ export async function updateModule(
         });
 
         revalidatePath(`/instructor/courses/${courseId}`);
-        return module;
-    } catch (error) {
+        return mod;
+    } catch (error: unknown) {
         console.log("[UPDATE_MODULE]", error);
         throw new Error("Internal Error");
     }
@@ -246,17 +220,13 @@ export async function reorderModules(
     updateData: { id: string; position: number }[]
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -275,7 +245,7 @@ export async function reorderModules(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[REORDER_MODULES]", error);
         throw new Error("Internal Error");
     }
@@ -283,17 +253,13 @@ export async function reorderModules(
 
 export async function deleteModule(courseId: string, moduleId: string) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
                 id: courseId,
                 instructorId: userId,
+                tenantId,
             },
         });
 
@@ -303,15 +269,15 @@ export async function deleteModule(courseId: string, moduleId: string) {
 
         await assertCourseStructuralEditable(courseId, courseOwner.tenantId);
 
-        const module = await prisma.module.delete({
+        const mod = await prisma.module.delete({
             where: {
                 id: moduleId,
             },
         });
 
         revalidatePath(`/instructor/courses/${courseId}`);
-        return module;
-    } catch (error) {
+        return mod;
+    } catch (error: unknown) {
         console.log("[DELETE_MODULE]", error);
         throw new Error("Internal Error");
     }
@@ -327,12 +293,7 @@ export async function createLesson(
     title: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
@@ -368,7 +329,7 @@ export async function createLesson(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return lesson;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[CREATE_LESSON]", error);
         throw new Error("Internal Error");
     }
@@ -381,12 +342,7 @@ export async function updateLesson(
     values: Partial<Lesson>
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
@@ -413,7 +369,7 @@ export async function updateLesson(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return lesson;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[UPDATE_LESSON]", error);
         throw new Error("Internal Error");
     }
@@ -425,12 +381,7 @@ export async function reorderLessons(
     updateData: { id: string; position: number }[]
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
@@ -454,7 +405,7 @@ export async function reorderLessons(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[REORDER_LESSONS]", error);
         throw new Error("Internal Error");
     }
@@ -466,12 +417,7 @@ export async function deleteLesson(
     lessonId: string
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: {
@@ -495,7 +441,7 @@ export async function deleteLesson(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return lesson;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[DELETE_LESSON]", error);
         throw new Error("Internal Error");
     }
@@ -508,12 +454,7 @@ export async function applyAIOutline(
     modules: { title: string; lessons: string[] }[]
 ) {
     try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const { userId, tenantId } = await getSessionContext();
 
         const courseOwner = await prisma.course.findFirst({
             where: { id: courseId, instructorId: userId },
@@ -532,7 +473,7 @@ export async function applyAIOutline(
         let moduleOrder = lastModule ? lastModule.order + 1 : 1;
 
         for (const moduleData of modules) {
-            const module = await prisma.module.create({
+            const mod = await prisma.module.create({
                 data: {
                     title: moduleData.title,
                     courseId,
@@ -545,7 +486,7 @@ export async function applyAIOutline(
                 await prisma.lesson.create({
                     data: {
                         title: lessonTitle,
-                        moduleId: module.id,
+                        moduleId: mod.id,
                         order: lessonOrder++,
                     },
                 });
@@ -554,7 +495,7 @@ export async function applyAIOutline(
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("[APPLY_AI_OUTLINE]", error);
         return { success: false, error: "Failed to apply outline" };
     }

@@ -4,6 +4,14 @@
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
+
+interface Question {
+    id: string;
+    type: "MCQ" | "SHORT_ANSWER";
+    points: number;
+    correctAnswer?: string;
+}
 
 export async function startExam(courseId: string, examId: string) {
     try {
@@ -53,7 +61,7 @@ export async function startExam(courseId: string, examId: string) {
 
         revalidatePath(`/courses/${courseId}/exams/${examId}/take`);
         return attempt;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[START_EXAM]", error);
         throw new Error("Internal Error");
     }
@@ -94,11 +102,11 @@ export async function submitExam(
 
         // Calculate Score
         // Get exam questions
-        const questions = attempt.exam.questions as any[]; // Need casting
+        const questions = (attempt.exam.questions as unknown) as Question[];
         let score = 0;
         let totalPoints = 0;
 
-        questions.forEach((q: any) => {
+        questions.forEach((q) => {
             totalPoints += (q.points || 0);
             const userAnswer = answers[q.id];
 
@@ -117,7 +125,7 @@ export async function submitExam(
                 id: attempt.id,
             },
             data: {
-                answers: answers as any,
+                answers: answers as Prisma.JsonObject,
                 score: finalScore,
                 submittedAt: new Date(),
             },
@@ -125,7 +133,7 @@ export async function submitExam(
 
         revalidatePath(`/courses/${courseId}/exams/${examId}/take`);
         return updatedAttempt;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[SUBMIT_EXAM]", error);
         throw new Error("Internal Error");
     }
@@ -154,12 +162,12 @@ export async function updateExamProgress(
                 id: attemptId,
             },
             data: {
-                answers: answers as any, // Update answers JSON
+                answers: answers as Prisma.JsonObject, // Update answers JSON
             },
         });
 
         return attempt;
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("[UPDATE_EXAM_PROGRESS]", error);
         throw new Error("Internal Error");
     }
