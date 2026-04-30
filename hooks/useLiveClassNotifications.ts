@@ -19,7 +19,12 @@ export const useLiveClassNotifications = () => {
                 const data = await response.json();
 
                 if (data.success && data.classes.length > 0) {
-                    data.classes.forEach((liveClass: any) => {
+                    interface LiveClass {
+                        id: string;
+                        title: string;
+                    }
+
+                    data.classes.forEach((liveClass: LiveClass) => {
                         toast("Class Starting Now!", {
                             description: `${liveClass.title} is starting. Join now to participate.`,
                             action: {

@@ -74,7 +74,7 @@ export const ExamQuestionsList = ({
         try {
             setIsLoading(true);
             await updateExam(courseId, examId, {
-                questions: updatedQuestions as any
+                questions: updatedQuestions as unknown as Exam['questions']
             });
             setQuestions(updatedQuestions);
             router.refresh();

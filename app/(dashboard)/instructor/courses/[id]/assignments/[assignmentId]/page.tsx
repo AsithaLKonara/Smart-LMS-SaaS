@@ -91,7 +91,7 @@ export default async function EditAssignmentPage({
                                 Submissions ({assignment.submissions.length})
                             </h2>
                         </div>
-                        <SubmissionsList courseId={courseId} submissions={assignment.submissions as any} />
+                        <SubmissionsList courseId={courseId} submissions={assignment.submissions} />
                     </div>
                 </div>
             </Container>

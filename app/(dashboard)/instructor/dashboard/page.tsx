@@ -34,7 +34,7 @@ export default async function InstructorDashboardPage() {
                         Instructor <TextGradient>Power-up</TextGradient>
                     </h1>
                     <p className="text-text-secondary text-lg">
-                        Your courses are reaching new heights. Here's your performance breakdown.
+                        Your courses are reaching new heights. Here&apos;s your performance breakdown.
                     </p>
                 </div>
                 <div className="flex items-center gap-4">

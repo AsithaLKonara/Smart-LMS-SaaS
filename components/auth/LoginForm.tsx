@@ -190,7 +190,7 @@ export function LoginForm() {
 
           <div className="text-center pt-2">
             <p className="text-sm text-text-secondary">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/register"
                 className="text-accent-cyan hover:text-white transition-colors font-bold underline underline-offset-4"

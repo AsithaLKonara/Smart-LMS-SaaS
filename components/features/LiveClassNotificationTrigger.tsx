@@ -20,7 +20,14 @@ export const LiveClassNotificationTrigger = () => {
 
                 const now = new Date();
 
-                data.forEach((liveClass: any) => {
+                interface LiveClass {
+                    id: string;
+                    title: string;
+                    scheduledAt: string | Date;
+                    meetingUrl: string;
+                }
+
+                data.forEach((liveClass: LiveClass) => {
                     const scheduledTime = new Date(liveClass.scheduledAt);
                     const diffMinutes = (scheduledTime.getTime() - now.getTime()) / (1000 * 60);
 

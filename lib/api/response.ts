@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
     success: boolean;
     data?: T;
     error?: string;
@@ -39,11 +39,15 @@ export function apiError(message: string, status: number = 400, code?: string) {
     );
 }
 
-export function handleApiError(error: any) {
+export function handleApiError(error: unknown) {
     console.error("[API_ERROR]", error);
 
     if (error instanceof ApiError) {
         return apiError(error.message, error.status, error.code);
+    }
+
+    if (error instanceof Error) {
+        return apiError(error.message, 500, "INTERNAL_ERROR");
     }
 
     return apiError("Internal Server Error", 500, "INTERNAL_ERROR");

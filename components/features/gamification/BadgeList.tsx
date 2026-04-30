@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Award, CheckCircle2, Trophy, Zap, Star, Rocket, Target, BookOpen } from "lucide-react";
+import { LucideIcon, Award, CheckCircle2, Trophy, Zap, Star, Rocket, Target, BookOpen } from "lucide-react";
 import { BadgeType } from "@prisma/client";
 import { cn } from "@/lib/utils/cn";
 import { format } from "date-fns";
@@ -17,7 +17,7 @@ interface BadgeListProps {
     badges: Badge[];
 }
 
-const BADGE_CONFIG: Record<BadgeType, { icon: any; color: string; label: string; description: string }> = {
+const BADGE_CONFIG: Record<BadgeType, { icon: LucideIcon; color: string; label: string; description: string }> = {
     FIRST_LESSON: { icon: BookOpen, color: "text-blue-400", label: "Early Learner", description: "Completed your first lesson!" },
     COURSE_COMPLETE: { icon: Trophy, color: "text-yellow-500", label: "Master", description: "Completed a full course!" },
     WEEK_STREAK: { icon: Zap, color: "text-orange-500", label: "Consistent", description: "Maintained a 7-day streak!" },

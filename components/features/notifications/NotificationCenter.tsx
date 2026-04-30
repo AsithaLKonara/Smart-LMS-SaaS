@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
@@ -21,7 +21,7 @@ export function NotificationCenter() {
   const [type, setType] = useState<(typeof typeOptions)[number]>('ALL');
   const [unreadOnly, setUnreadOnly] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     const search = new URLSearchParams();
     if (type !== 'ALL') search.set('type', type);
@@ -30,7 +30,7 @@ export function NotificationCenter() {
     const data = await res.json();
     setItems(data.data ?? []);
     setLoading(false);
-  }
+  }, [type, unreadOnly]);
 
   async function markRead(ids?: string[]) {
     await fetch('/api/notifications', {
@@ -42,8 +42,9 @@ export function NotificationCenter() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [type, unreadOnly]);
+  }, [load]);
 
   const unreadCount = useMemo(() => items.filter((n) => !n.read).length, [items]);
 

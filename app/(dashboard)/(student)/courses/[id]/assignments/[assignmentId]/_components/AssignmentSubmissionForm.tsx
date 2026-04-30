@@ -73,7 +73,7 @@ export const AssignmentSubmissionForm = ({
                         Submitted on {format(new Date(existingSubmission.submittedAt), "PPP p")}
                     </div>
                     <p className="text-sm text-text-secondary">
-                        You can resubmit below if the due date hasn't passed.
+                        You can resubmit below if the due date hasn&apos;t passed.
                     </p>
                 </div>
             )}

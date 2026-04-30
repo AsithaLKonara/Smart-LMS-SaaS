@@ -40,7 +40,7 @@ export default async function ExamIdPage({
     const requiredFields = [
         exam.title,
         exam.duration,
-        (exam.questions as any[])?.length > 0
+        (exam.questions as unknown[])?.length > 0
     ];
 
     const totalFields = requiredFields.length;

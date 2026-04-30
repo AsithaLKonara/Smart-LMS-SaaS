@@ -208,7 +208,7 @@ export function OnboardingWizard({ tenantId, onComplete }: OnboardingWizardProps
                                 <div>
                                     <h2 className="text-4xl font-bold font-heading mb-3 tracking-tight">Ready for <TextGradient>Impact!</TextGradient></h2>
                                     <p className="text-text-secondary text-lg max-w-md mx-auto">
-                                        Your configuration is locked in. It's time to build the future of education.
+                                        Your configuration is locked in. It&apos;s time to build the future of education.
                                     </p>
                                 </div>
                             </motion.div>

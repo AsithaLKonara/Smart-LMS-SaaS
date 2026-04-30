@@ -34,7 +34,7 @@ export const LiveClassForm = ({ courseId }: LiveClassFormProps) => {
     const [error, setError] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema) as any,
+        resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
             description: "",

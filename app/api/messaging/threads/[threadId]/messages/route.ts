@@ -50,6 +50,15 @@ export async function POST(
     if (!message) {
       return NextResponse.json({ success: false, error: 'Thread not found or no access' }, { status: 404 });
     }
+
+    // Real-time update via Pusher
+    try {
+      const { pusherServer } = await import('@/lib/pusher');
+      await pusherServer.trigger(`thread-${threadId}`, 'new-message', message);
+    } catch (err) {
+      console.error('Pusher trigger failed:', err);
+    }
+
     return NextResponse.json({ success: true, data: message }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

@@ -53,7 +53,7 @@ export function AISection() {
           </h2>
           
           <p className="text-text-secondary text-lg leading-relaxed max-w-lg">
-            We've integrated advanced AI models at every level of the learning experience to make education more personalized, efficient, and engaging than ever before.
+            We&apos;ve integrated advanced AI models at every level of the learning experience to make education more personalized, efficient, and engaging than ever before.
           </p>
           
           <div className="grid sm:grid-cols-2 gap-6">

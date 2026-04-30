@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Exam, ExamAttempt } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
@@ -24,7 +24,7 @@ interface Question {
 interface ExamRunnerProps {
     courseId: string;
     examId: string;
-    exam: Exam & { questions: any };
+    exam: Exam & { questions: Question[] };
     attempt: ExamAttempt;
 }
 
@@ -46,14 +46,14 @@ export const ExamRunner = ({
     const currentQuestion = questions[currentQuestionIndex];
     const [lastSaved, setLastSaved] = useState<Date>(new Date());
 
-    const saveProgress = async () => {
+    const saveProgress = useCallback(async () => {
         try {
             await updateExamProgress(attempt.id, answers);
             setLastSaved(new Date());
         } catch (error) {
             console.error("Failed to save progress", error);
         }
-    }
+    }, [attempt.id, answers]);
 
     // Auto-save every 30 seconds
     useEffect(() => {
@@ -61,7 +61,7 @@ export const ExamRunner = ({
             saveProgress();
         }, 30000);
         return () => clearInterval(interval);
-    }, [answers]);
+    }, [saveProgress]);
 
     // Timer Logic
     useEffect(() => {
@@ -86,7 +86,7 @@ export const ExamRunner = ({
         const interval = setInterval(updateTimer, 1000);
 
         return () => clearInterval(interval);
-    }, [exam.duration, attempt.createdAt, isLoading]); // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [exam.duration, attempt.createdAt, isLoading, handleSubmit]);
 
     const handleAnswerChange = (value: string) => {
         setAnswers(prev => ({
@@ -109,7 +109,7 @@ export const ExamRunner = ({
         }
     };
 
-    const handleSubmit = async (autoSubmit = false) => {
+    const handleSubmit = useCallback(async (autoSubmit = false) => {
         if (isLoading) return;
 
         try {
@@ -126,7 +126,7 @@ export const ExamRunner = ({
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isLoading, courseId, examId, answers, router]);
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);

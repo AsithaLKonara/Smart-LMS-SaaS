@@ -49,11 +49,11 @@ export async function GET(req: Request) {
         const results = [];
 
         for (const liveClass of upcomingClasses) {
-            const enrollments = (liveClass as any).course.enrollments;
-            const students = enrollments.map((e: any) => e.user).filter((u: any) => u.email);
+            const enrollments = liveClass.course.enrollments;
+            const students = enrollments.map((e) => e.user).filter((u) => u.email);
 
             // Send emails
-            const emailPromises = students.map((student: any) =>
+            const emailPromises = students.map((student) =>
                 sendLiveClassReminder(
                     student.email,
                     student.name || 'Student',
@@ -87,8 +87,11 @@ export async function GET(req: Request) {
             details: results
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("[CRON_ERROR]", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Internal Server Error" }, 
+            { status: 500 }
+        );
     }
 }

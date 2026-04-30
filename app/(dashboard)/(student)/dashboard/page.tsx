@@ -1,24 +1,22 @@
 import { auth } from '@/lib/auth/config';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { format } from 'date-fns';
+import { prisma } from '@/lib/db/prisma';
 import { getEnrollmentsByUser } from '@/lib/db/queries/enrollments';
 import { getCoursesByTenant } from '@/lib/db/queries/courses';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Container } from '@/components/layout/Container';
-import Link from 'next/link';
-import { formatDistanceToNow, format } from 'date-fns';
-import { prisma } from '@/lib/db/prisma';
-import {
-  Video,
-  Calendar,
+import { 
+  Video, 
+  Calendar, 
+  Clock, 
+  GraduationCap, 
+  Activity, 
+  Trophy,
   Sparkles,
   BookOpen,
-  Search,
-  Clock,
-  GraduationCap,
-  Activity,
-  Trophy,
-  Zap
+  Search
 } from 'lucide-react';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { getStreak, getBadges } from '@/lib/db/queries/gamification';
@@ -100,7 +98,7 @@ export default async function StudentDashboardPage() {
               Welcome back, <TextGradient>{session.user.name}</TextGradient>!
             </h1>
             <p className="text-text-secondary text-lg">
-              You're doing great! Here's what's happening with your learning today.
+              You&apos;re doing great! Here&apos;s what&apos;s happening with your learning today.
             </p>
           </FadeIn>
           <div className="flex items-center gap-4">
@@ -318,7 +316,7 @@ export default async function StudentDashboardPage() {
             <Sparkles className="h-6 w-6 text-accent-purple" />
             <h2 className="text-2xl font-semibold text-text-primary">My Achievements</h2>
           </div>
-          <BadgeList badges={badges as any} />
+          <BadgeList badges={badges} />
         </div>
       </div>
     </div>

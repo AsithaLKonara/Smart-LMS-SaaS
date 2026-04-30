@@ -24,7 +24,7 @@ export default async function AdminDashboardPage() {
         return redirect("/dashboard");
     }
 
-    const stats = await getAdminStats();
+    const stats = await getAdminStats(role === 'SUPER_ADMIN' ? undefined : session.user.tenantId);
 
     return (
         <div className="flex flex-col gap-10">
