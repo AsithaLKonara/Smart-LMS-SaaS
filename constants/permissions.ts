@@ -85,6 +85,10 @@ export const PERMISSIONS = {
   COHORT_CREATE: 'cohort:create',
   COHORT_ASSIGN: 'cohort:assign',
   COHORT_VIEW: 'cohort:view',
+
+  // Finance & Payments
+  FINANCE_VIEW: 'finance:view',
+  FINANCE_EXPORT: 'finance:export',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -144,6 +148,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.COHORT_CREATE,
     PERMISSIONS.COHORT_ASSIGN,
     PERMISSIONS.COHORT_VIEW,
+    PERMISSIONS.FINANCE_VIEW,
+    PERMISSIONS.FINANCE_EXPORT,
   ],
   TENANT_ADMIN: [
     PERMISSIONS.TENANT_VIEW,
@@ -185,6 +191,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.COHORT_CREATE,
     PERMISSIONS.COHORT_ASSIGN,
     PERMISSIONS.COHORT_VIEW,
+    PERMISSIONS.FINANCE_VIEW,
   ],
   INSTRUCTOR: [
     PERMISSIONS.PROFILE_UPDATE,
@@ -211,6 +218,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.AI_GRADE_ASSIST,
     PERMISSIONS.COHORT_VIEW,
     PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.FINANCE_VIEW,
   ],
   STUDENT: [
     PERMISSIONS.PROFILE_UPDATE,

@@ -16,7 +16,8 @@ import {
   Users,
   LucideIcon,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { Button } from '@/components/ui/Button';
@@ -50,6 +51,7 @@ const getNavItems = (role?: RoleType): NavItem[] => {
       { href: '/messaging', label: 'Messaging', icon: MessageSquare },
       { href: '/assets', label: 'Asset Library', icon: BookOpen },
       { href: '/courses', label: 'Course Library', icon: BookOpen },
+      { href: '/payments', label: 'Earnings', icon: DollarSign },
       ...common,
     ];
   }
@@ -76,7 +78,8 @@ const getNavItems = (role?: RoleType): NavItem[] => {
       { href: '/instructor/courses', label: 'Manage Courses', icon: BookOpen },
       { href: '/messaging', label: 'Messaging', icon: MessageSquare },
       { href: '/assets', label: 'Asset Library', icon: BookOpen },
-      { href: '/billing', label: 'Billing', icon: Settings },
+      { href: '/payments', label: 'Payments', icon: DollarSign },
+      { href: '/billing', label: 'Subscription', icon: Settings },
       ...common,
     ];
   }
