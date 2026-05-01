@@ -4,6 +4,11 @@ import type { RoleType } from '@prisma/client';
 import Google from 'next-auth/providers/google';
 import Facebook from 'next-auth/providers/facebook';
 
+const useSecureCookies = process.env.NODE_ENV === 'production';
+const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+// Only set domain in production to avoid issues with localhost subdomains in some browsers
+const cookieDomain = useSecureCookies ? `.${rootDomain}` : undefined;
+
 export const authConfig = {
   providers: [
     Google({
@@ -14,7 +19,19 @@ export const authConfig = {
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
     }),
-  ], // Empty array for middleware compatibility replaced with social providers
+  ],
+  cookies: {
+    sessionToken: {
+      name: useSecureCookies ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureCookies,
+        domain: cookieDomain,
+      },
+    },
+  },
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
