@@ -6,15 +6,17 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Loader2, Video } from "lucide-react";
+import { Video, Pencil, Loader2 } from "lucide-react";
 import { updateLesson } from "@/app/actions/courses";
 
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { cn } from "@/lib/utils/cn";
+import { VideoPlayer } from "@/components/features/video/VideoPlayer";
 
 interface LessonVideoFormProps {
     initialData: {
-        videoUrl: string | null;
+        videoProvider: string;
+        videoExternalId: string | null;
     };
     courseId: string;
     moduleId: string;
@@ -22,9 +24,8 @@ interface LessonVideoFormProps {
 }
 
 const formSchema = z.object({
-    videoUrl: z.string().url("Must be a valid URL").min(1, {
-        message: "Video URL is required",
-    }),
+    videoProvider: z.string(),
+    videoExternalId: z.string().min(1),
 });
 
 export const LessonVideoForm = ({
@@ -39,7 +40,8 @@ export const LessonVideoForm = ({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            videoUrl: initialData.videoUrl || "",
+            videoProvider: initialData.videoProvider || "YOUTUBE",
+            videoExternalId: initialData.videoExternalId || "",
         },
     });
 
@@ -52,63 +54,63 @@ export const LessonVideoForm = ({
             await updateLesson(courseId, moduleId, lessonId, values);
             toggleEdit();
             router.refresh();
-            // toast.success("Lesson updated");
         } catch {
-            // toast.error("Something went wrong");
+            console.error("Something went wrong");
         }
     };
 
     return (
         <div className="border border-white/10 rounded-md p-4 bg-background-elevated">
             <div className="flex items-center justify-between font-medium text-text-primary">
-                Lesson Video
-                <Button onClick={toggleEdit} variant="ghost" size="sm">
+                Enterprise Video Integration
+                <Button onClick={toggleEdit} variant="ghost" size="sm" className="hover:bg-white/5">
                     {isEditing ? (
                         <>Cancel</>
                     ) : (
                         <>
-                            {initialData.videoUrl ? (
-                                <Pencil className="h-4 w-4 mr-2" />
-                            ) : (
-                                <Video className="h-4 w-4 mr-2" />
-                            )}
-                            {initialData.videoUrl ? "Edit video" : "Add video"}
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Manage Video
                         </>
                     )}
                 </Button>
             </div>
             {!isEditing && (
-                !initialData.videoUrl ? (
-                    <div className="flex items-center justify-center h-60 bg-slate-800 rounded-md mt-4">
-                        <Video className="h-10 w-10 text-slate-500" />
-                    </div>
-                ) : (
-                    <div className="relative aspect-video mt-2">
-                        <div className="p-4 bg-slate-800 rounded-md break-all">
-                            Video URL: <a href={initialData.videoUrl} target="_blank" className="text-accent-cyan underline">{initialData.videoUrl}</a>
-                            <p className="text-xs text-text-muted mt-2">Embed preview pending implementation</p>
-                        </div>
-                    </div>
-                )
+                <div className="mt-2">
+                    <VideoPlayer 
+                        provider={initialData.videoProvider as any} 
+                        externalId={initialData.videoExternalId || ""} 
+                    />
+                </div>
             )}
             {isEditing && (
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-                    <Input
-                        {...form.register("videoUrl")}
-                        placeholder="e.g. https://youtube.com/..."
-                        className="bg-background-secondary border-none"
-                        disabled={isSubmitting}
-                    />
-                    <div className="text-xs text-text-muted">
-                        Enter a YouTube, Vimeo, or direct video link.
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-text-muted uppercase">Provider</label>
+                        <select 
+                            className="w-full bg-background-secondary border border-white/10 rounded-lg px-4 py-2 text-text-primary outline-none"
+                            {...form.register("videoProvider")}
+                        >
+                            <option value="YOUTUBE">YouTube (Unlisted/Secure)</option>
+                            <option value="VIMEO">Vimeo (Private)</option>
+                            <option value="BUNNY_NET">Bunny.net (Encrypted HLS)</option>
+                            <option value="WISTIA">Wistia</option>
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-text-muted uppercase">External Video ID</label>
+                        <input 
+                            className="w-full bg-background-secondary border border-white/10 rounded-lg px-4 py-2 text-text-primary outline-none"
+                            placeholder="e.g. dQw4w9WgXcQ"
+                            {...form.register("videoExternalId")}
+                        />
                     </div>
                     <div className="flex items-center gap-x-2">
                         <Button
                             disabled={!isValid || isSubmitting}
                             type="submit"
                         >
-                            {isSubmitting?.toString() === 'true' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Save
+                            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Update Video
                         </Button>
                     </div>
                 </form>

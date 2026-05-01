@@ -57,6 +57,7 @@ const getNavItems = (role?: RoleType): NavItem[] => {
   if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'SUPER_ADMIN') {
     return [
       { href: '/admin/dashboard', label: 'Site Admin', icon: Shield },
+      { href: '/admin/audit', label: 'Audit Logs', icon: Shield },
       { href: '/admin/users', label: 'Users', icon: Users },
       { href: '/cohorts', label: 'Cohorts', icon: Users },
       { href: '/analytics', label: 'Analytics', icon: LayoutDashboard },

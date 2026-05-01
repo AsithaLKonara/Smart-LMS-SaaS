@@ -103,6 +103,7 @@ enum ScormStatus {
 // TENANT & USER MODELS
 // ============================================
 
+
 model Tenant {
   id          String   @id @default(cuid())
   name        String
@@ -116,6 +117,15 @@ model Tenant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Marketplace & Public Profile
+  isPartner         Boolean  @default(false)
+  publicDescription String?  @db.Text
+  tagline           String?
+  websiteUrl        String?
+  socialLinks       Json?    // { twitter: '', linkedin: '', etc }
+  customCss         String?  @db.Text
+  verifiedAt        DateTime?
+
   users   User[]
   courses Course[]
   roles   Role[]
@@ -125,9 +135,108 @@ model Tenant {
   messageThreads MessageThread[]
   assets         Asset[]
   supportTickets SupportTicket[]
+  videoIntegrations VideoIntegration[]
+  auditLogs      AuditLog[]
+  apiKeys        ApiKey[]
+  customDomain   CustomDomain?
+  orders         Order[]
+  transactions   FinancialTransaction[]
+  payouts        Payout[]
 
   @@index([subdomain])
   @@map("tenants")
+}
+
+// ============================================
+// FINANCIAL & COMMERCE MODELS
+// ============================================
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  CASH
+  MOBILE_WALLET
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  tenantId        String
+  userId          String
+  courseId        String?
+  amount          Float
+  currency        String      @default("LKR")
+  status          OrderStatus @default(PENDING)
+  paymentMethod   PaymentMethod
+  paymentId       String?     // Gateway reference
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  bankSlip  BankSlip?
+  transactions FinancialTransaction[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("orders")
+}
+
+model BankSlip {
+  id          String   @id @default(cuid())
+  orderId     String   @unique
+  imageUrl    String
+  bankName    String?
+  reference   String?
+  verifiedAt  DateTime?
+  verifiedById String?
+  createdAt   DateTime @default(now())
+
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  verifiedBy User? @relation("SlipVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@map("bank_slips")
+}
+
+model FinancialTransaction {
+  id            String   @id @default(cuid())
+  tenantId      String
+  orderId       String?
+  type          String   // INFLOW (Sale), OUTFLOW (Payout), FEE
+  amount        Float
+  description   String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@map("financial_transactions")
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  tenantId    String
+  amount      Float
+  status      String   @default("PENDING") // PENDING, PAID, REJECTED
+  method      String   // BANK_TRANSFER
+  accountDetails Json?
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("payouts")
 }
 
 model User {
@@ -166,6 +275,9 @@ model User {
   aiConversations AIConversation[]
   supportTickets  SupportTicket[]
   supportMessages SupportMessage[]
+  auditLogs       AuditLog[]
+  orders          Order[]
+  verifiedSlips   BankSlip[]    @relation("SlipVerifier")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -181,6 +293,7 @@ model Role {
   createdAt  DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -215,6 +328,7 @@ model Course {
   messageThreads MessageThread[]
   assets         Asset[]
   auditLogs   CourseAuditLog[]
+  orders      Order[]
 
   @@index([tenantId])
   @@index([instructorId])
@@ -242,6 +356,9 @@ model Lesson {
   title     String
   content   String?  // Rich text content
   videoUrl  String?  // YouTube/Vimeo URL
+  videoProvider          VideoProvider        @default(YOUTUBE)
+  videoExternalId       String?              // The ID from the provider
+  videoConfig            Json?                // Controls, Autoplay, etc.
   duration  Int?     // Duration in seconds
   isFree    Boolean  @default(false)
   order     Int
@@ -783,6 +900,7 @@ model SupportMessage {
   @@map("support_messages")
 }
 
+
 model ContactLead {
   id        String   @id @default(cuid())
   name      String
@@ -794,4 +912,106 @@ model ContactLead {
 
   @@index([email])
   @@map("contact_leads")
+}
+
+// ============================================
+// ENTERPRISE & INTEGRATION MODELS
+// ============================================
+
+enum VideoProvider {
+  YOUTUBE
+  VIMEO
+  BUNNY_NET
+  WISTIA
+  CUSTOM_HLS
+}
+
+model VideoIntegration {
+  id          String        @id @default(cuid())
+  tenantId    String
+  provider    VideoProvider
+  apiKey      String?       // Encrypted
+  apiSecret   String?       // Encrypted
+  libraryId   String?       // For Bunny.net
+  isActive    Boolean       @default(true)
+  config      Json?         // Provider specific settings
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("video_integrations")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  actorId     String
+  action      String   // e.g., "USER_UPDATE", "COURSE_DELETE"
+  resource    String   // e.g., "User:cl... "
+  payload     Json?    // Before/After data
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor  User   @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([actorId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g., "course:manage"
+  description String?
+  category    String   // e.g., "Courses", "Users", "Billing"
+  
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String
+  key         String    @unique // Hashed
+  prefix      String    // First 7 chars
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("api_keys")
+}
+
+model CustomDomain {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  hostname    String   @unique // e.g., "academy.client.com"
+  status      String   @default("PENDING") // PENDING, ACTIVE, FAILED
+  sslEnabled  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("custom_domains")
 }

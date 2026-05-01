@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { Course, Lesson, Module } from "@prisma/client";
 import { transitionCourseStatus, assertCourseStructuralEditable, assertLessonUpdateAllowed } from "@/lib/db/queries/course-lifecycle";
 import { assertTenantOperational, assertCourseLimit } from "@/lib/billing/seats";
+import { logActivity } from "@/lib/enterprise/audit";
 
 export async function createCourse(data: { title: string }) {
     try {
@@ -28,6 +29,8 @@ export async function createCourse(data: { title: string }) {
                 instructorId: userId,
             },
         });
+
+        await logActivity(tenantId, userId, "COURSE_CREATE", `Course:${course.id}`, { title: data.title });
 
         revalidatePath("/instructor/courses");
         return course;
@@ -67,6 +70,8 @@ export async function updateCourse(
                 ...data,
             },
         });
+
+        await logActivity(tenantId, userId, "COURSE_UPDATE", `Course:${courseId}`, values);
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return course;
@@ -366,6 +371,8 @@ export async function updateLesson(
                 ...values,
             },
         });
+
+        await logActivity(courseOwner.tenantId, userId, "LESSON_UPDATE", `Lesson:${lessonId}`, values);
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return lesson;

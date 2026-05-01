@@ -5,11 +5,19 @@ import { prisma } from "@/lib/db/prisma";
 import { getSessionContext } from "@/lib/auth/utils";
 import { revalidatePath } from "next/cache";
 
-export async function updateTenantBrandingAction(data: { name?: string; logo?: string; accentColor?: string }) {
+export async function updateTenantBrandingAction(data: { 
+    name?: string; 
+    logo?: string; 
+    accentColor?: string;
+    isPartner?: boolean;
+    publicDescription?: string;
+    tagline?: string;
+    websiteUrl?: string;
+}) {
     try {
         const { tenantId, role } = await getSessionContext();
 
-        if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        if (role !== 'ADMIN' && role !== 'TENANT_ADMIN' && role !== 'SUPER_ADMIN') {
             throw new Error("Unauthorized");
         }
 
@@ -19,6 +27,10 @@ export async function updateTenantBrandingAction(data: { name?: string; logo?: s
                 name: data.name,
                 logo: data.logo,
                 accentColor: data.accentColor,
+                isPartner: data.isPartner,
+                publicDescription: data.publicDescription,
+                tagline: data.tagline,
+                websiteUrl: data.websiteUrl,
             }
         });
 

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db/prisma';
 import { RefreshPageShell } from '@/components/dashboard/RefreshPageShell';
 import { BrandingSettings } from '@/components/features/settings/BrandingSettings';
+import { MarketplaceSettings } from '@/components/features/settings/MarketplaceSettings';
 import { Container } from '@/components/layout/Container';
 
 export default async function OrgSettingsPage() {
@@ -16,24 +17,33 @@ export default async function OrgSettingsPage() {
     if (!tenant) return null;
 
     return (
-        <div className="pb-20">
+        <div className="pb-20 space-y-12">
             <RefreshPageShell
                 title="Organization Settings"
                 subtitle="Configure branding, domains, and tenant-level behavior controls."
                 stats={[
                     { label: 'Brand Profile', value: 'Active' },
                     { label: 'Plan', value: tenant.plan },
-                    { label: 'Status', value: tenant.status },
+                    { label: 'Marketplace', value: tenant.isPartner ? 'Listed' : 'Hidden' },
                     { label: 'Joined', value: new Date(tenant.createdAt).getFullYear().toString() },
                 ]}
             />
-            <Container className="mt-8">
+            <Container className="mt-8 space-y-12">
                 <BrandingSettings 
                     initialData={{
                         name: tenant.name,
                         logo: tenant.logo || '',
                         accentColor: tenant.accentColor || '#22D3EE'
                     }} 
+                />
+
+                <MarketplaceSettings 
+                    initialData={{
+                        isPartner: tenant.isPartner,
+                        publicDescription: tenant.publicDescription || '',
+                        tagline: tenant.tagline || '',
+                        websiteUrl: tenant.websiteUrl || ''
+                    }}
                 />
             </Container>
         </div>
