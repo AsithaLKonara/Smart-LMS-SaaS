@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
 
   // Public routes - allow access
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/partners'];
   if (publicRoutes.includes(path) || path.startsWith('/api/auth')) {
     return NextResponse.next();
   }
