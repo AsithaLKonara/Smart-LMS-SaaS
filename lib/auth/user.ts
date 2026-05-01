@@ -10,16 +10,26 @@ export async function authenticateUser(
   password: string,
   tenantId?: string
 ) {
-  const user = await getDbUser(email, tenantId);
+  let user;
+  try {
+    user = await getDbUser(email, tenantId);
+  } catch (error) {
+    console.error('Database connection error during authentication:', error);
+    throw new Error('DATABASE_CONNECTION_ERROR');
+  }
 
-  if (!user || !user.password) {
-    return null;
+  if (!user) {
+    throw new Error('INVALID_CREDENTIALS');
+  }
+
+  if (!user.password) {
+    throw new Error('AUTH_METHOD_NOT_SUPPORTED');
   }
 
   const isValid = await verifyPassword(password, user.password);
 
   if (!isValid) {
-    return null;
+    throw new Error('INVALID_CREDENTIALS');
   }
 
   // Return user without password

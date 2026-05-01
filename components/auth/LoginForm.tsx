@@ -37,7 +37,23 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        // Handle custom error codes from lib/auth/config.ts
+        switch (result.error) {
+          case 'db_connection_error':
+            setError('Database connection failed. Please check your system configuration or contact support.');
+            break;
+          case 'invalid_credentials':
+            setError('Invalid email or password. Please try again.');
+            break;
+          case 'auth_method_not_supported':
+            setError('This account uses a different sign-in method (e.g., Google).');
+            break;
+          case 'CredentialsSignin':
+            setError('Invalid email or password.');
+            break;
+          default:
+            setError(result.error || 'An unexpected error occurred during sign in');
+        }
         setLoading(false);
         return;
       }
@@ -165,9 +181,9 @@ export function LoginForm() {
 
           <div className="grid grid-cols-2 gap-2">
             {[
-              { role: 'Student', email: 'student@demo.com', icon: Users, color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-600/5' },
+              { role: 'Student', email: 'student1@demo.com', icon: Users, color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-600/5' },
               { role: 'Instructor', email: 'instructor@demo.com', icon: GraduationCap, color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-600/5' },
-              { role: 'Tenant Admin', email: 'tenantadmin@demo.com', icon: ShieldCheck, color: 'text-accent-purple', bg: 'from-purple-500/10 to-purple-600/5' },
+              { role: 'Tenant Admin', email: 'admin@demo.com', icon: ShieldCheck, color: 'text-accent-purple', bg: 'from-purple-500/10 to-purple-600/5' },
               { role: 'Super Admin', email: 'superadmin@platform.com', icon: Globe, color: 'text-accent-cyan', bg: 'from-cyan-500/10 to-cyan-600/5' },
             ].map((demo) => (
               <button
