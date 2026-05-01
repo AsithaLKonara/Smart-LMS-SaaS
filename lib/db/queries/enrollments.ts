@@ -62,6 +62,13 @@ export async function getEnrollmentsByUser(userId: string) {
               modules: true,
             },
           },
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              subdomain: true,
+            },
+          },
         },
       },
     },

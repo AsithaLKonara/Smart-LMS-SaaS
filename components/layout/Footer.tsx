@@ -11,6 +11,7 @@ const links = [
     items: [
       { name: "Features", href: "#features" },
       { name: "Integrations", href: "#integrations" },
+      { name: "Institutes", href: "/institutes" },
       { name: "Pricing", href: "#pricing" },
       { name: "Changelog", href: "/changelog" }
     ]

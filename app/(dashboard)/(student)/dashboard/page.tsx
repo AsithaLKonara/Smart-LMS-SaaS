@@ -16,7 +16,8 @@ import {
   Trophy,
   Sparkles,
   BookOpen,
-  Search
+  Search,
+  ChevronRight
 } from 'lucide-react';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { getStreak, getBadges } from '@/lib/db/queries/gamification';
@@ -25,6 +26,8 @@ import { BadgeList } from '@/components/features/gamification/BadgeList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { KPIStrip } from '@/components/dashboard/KPIStrip';
 import { TextGradient } from '@/components/ui/TextGradient';
+import { getTenantFromHost } from '@/lib/auth/utils';
+import { getTenantBySubdomain } from '@/lib/db/queries/tenants';
 
 export default async function StudentDashboardPage() {
   const session = await auth();
@@ -34,33 +37,53 @@ export default async function StudentDashboardPage() {
   }
 
   const role = session.user.role;
-  // All authenticated users can access the student dashboard for now, 
-  // but we ensure they have a role.
   if (!role) {
     redirect('/login');
   }
 
   const userId = session.user.id;
-  const tenantId = session.user.tenantId;
+  
+  // Multi-Tenant Context Detection
+  const subdomain = await getTenantFromHost();
+  const currentInstitute = subdomain ? await getTenantBySubdomain(subdomain) : null;
+  const isGlobalMode = !subdomain;
 
   const streak = await getStreak(userId);
   const badges = await getBadges(userId);
 
   const upcomingClasses = await prisma.liveClass.findMany({
     where: {
-      course: { enrollments: { some: { userId } } },
+      course: { 
+        enrollments: { some: { userId } },
+        ...(currentInstitute ? { tenantId: currentInstitute.id } : {})
+      },
       scheduledAt: { gte: new Date() }
     },
-    include: { course: { select: { title: true, id: true } } },
+    include: { 
+        course: { 
+            select: { title: true, id: true, tenant: { select: { subdomain: true } } } 
+        } 
+    },
     orderBy: { scheduledAt: 'asc' },
     take: 3
   });
 
-  // Get user's enrollments
-  const enrollments = await getEnrollmentsByUser(userId);
+  // Get user's enrollments (Global)
+  const allEnrollments = await getEnrollmentsByUser(userId);
 
-  // Get available courses (published)
-  const availableCourses = await getCoursesByTenant(tenantId, 'PUBLISHED');
+  // Scoped enrollments based on mode
+  const enrollments = isGlobalMode 
+    ? allEnrollments 
+    : allEnrollments.filter(e => e.course.tenantId === currentInstitute?.id);
+  
+  const otherEnrollments = !isGlobalMode 
+    ? allEnrollments.filter(e => e.course.tenantId !== currentInstitute?.id)
+    : [];
+
+  // Get available courses (scoped to current tenant if on subdomain)
+  const availableCourses = currentInstitute 
+    ? await getCoursesByTenant(currentInstitute.id, 'PUBLISHED')
+    : [];
 
   // Get last accessed course/lesson
   const lastEnrollment = enrollments[0];
@@ -92,6 +115,13 @@ export default async function StudentDashboardPage() {
     return `${m}m`;
   };
 
+  const getTenantUrl = (subdomain: string | null, path: string = '') => {
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
+    if (!subdomain) return `${protocol}://${rootDomain}${path}`;
+    return `${protocol}://${subdomain}.${rootDomain}${path}`;
+  };
+
   return (
     <div className="min-h-screen bg-transparent pb-20 md:pb-0">
       <div className="flex flex-col gap-10">
@@ -101,18 +131,29 @@ export default async function StudentDashboardPage() {
             direction="right"
             className="flex flex-col gap-2"
           >
+            <div className="flex items-center gap-2 mb-2">
+                <div className="px-2 py-1 rounded bg-accent-cyan/10 border border-accent-cyan/20 text-[10px] font-bold text-accent-cyan uppercase tracking-widest">
+                    {isGlobalMode ? 'Global Learning Ecosystem' : `${currentInstitute?.name} Portal`}
+                </div>
+            </div>
             <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-heading tracking-tight">
-              Welcome back, <TextGradient>{session.user.name}</TextGradient>!
+              {isGlobalMode ? 'Your' : 'Welcome to'} <TextGradient>{isGlobalMode ? 'Learning Universe' : currentInstitute?.name}</TextGradient>
             </h1>
             <p className="text-text-secondary text-lg">
-              You&apos;re doing great! Here&apos;s what&apos;s happening with your learning today.
+              {isGlobalMode 
+                ? `Hello ${session.user.name}, explore all your courses across every institute in one place.` 
+                : `Pick up where you left off at ${currentInstitute?.name}.`}
             </p>
           </FadeIn>
           <div className="flex items-center gap-4">
             <StreakCounter count={streak?.currentStreak || 0} />
-            <Button variant="premium" size="sm" className="hidden border-none md:flex shadow-neon-purple">
-              Daily Challenge
-            </Button>
+            {!isGlobalMode && (
+                <Link href={getTenantUrl(null, '/dashboard')}>
+                    <Button variant="glass" size="sm" className="hidden md:flex">
+                        Global View
+                    </Button>
+                </Link>
+            )}
           </div>
         </div>
 
@@ -227,7 +268,9 @@ export default async function StudentDashboardPage() {
         {/* My Courses */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-text-primary">My Courses</h2>
+            <h2 className="text-2xl font-semibold text-text-primary">
+                {isGlobalMode ? 'All My Courses' : 'Courses at this Institute'}
+            </h2>
             <Link href="/courses">
               <Button variant="outline">View All</Button>
             </Link>
@@ -237,9 +280,9 @@ export default async function StudentDashboardPage() {
             <EmptyState
               icon={BookOpen}
               title="Your learning shelf is empty"
-              description="Browse our catalog to find your first course and start learning today."
-              actionLabel="Explore Catalog"
-              actionHref="/courses"
+              description={isGlobalMode ? "Start your journey by exploring our global institutes." : "Browse our catalog to find your first course at this institute."}
+              actionLabel={isGlobalMode ? "Explore Institutes" : "Explore Catalog"}
+              actionHref={isGlobalMode ? "/institutes" : "/courses"}
               className="py-16"
             />
           ) : (
@@ -247,6 +290,13 @@ export default async function StudentDashboardPage() {
               {enrollments.slice(0, 6).map((enrollment) => (
                 <Card key={enrollment.id} variant="elevated" interactive>
                   <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                        {isGlobalMode && (
+                            <div className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[8px] font-bold text-text-muted uppercase tracking-tighter">
+                                {enrollment.course.tenant.name}
+                            </div>
+                        )}
+                    </div>
                     <CardTitle className="line-clamp-2">{enrollment.course.title}</CardTitle>
                     <CardDescription>
                       by {enrollment.course.instructor.name}
@@ -265,7 +315,7 @@ export default async function StudentDashboardPage() {
                         />
                       </div>
                     </div>
-                    <Link href={`/courses/${enrollment.course.id}`}>
+                    <Link href={getTenantUrl(enrollment.course.tenant.subdomain, `/courses/${enrollment.course.id}`)}>
                       <Button variant="outline" className="w-full">
                         {enrollment.progress > 0 ? 'Continue' : 'Start Course'}
                       </Button>
@@ -277,46 +327,80 @@ export default async function StudentDashboardPage() {
           )}
         </div>
 
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-text-primary">Available Courses</h2>
-            <Link href="/courses">
-              <Button variant="outline">View All</Button>
-            </Link>
-          </div>
-          {availableCourses.filter(c => !enrollments.some(e => e.courseId === c.id)).length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableCourses
-                .filter(c => !enrollments.some(e => e.courseId === c.id))
-                .slice(0, 3)
-                .map((course) => (
-                  <Card key={course.id} variant="elevated" interactive>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-                      <CardDescription>
-                        by {course.instructor.name} • {course._count.enrollments} students
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-text-secondary text-sm mb-4 line-clamp-2">
-                        {course.description || 'No description available'}
-                      </p>
-                      <Link href={`/courses/${course.id}`}>
-                        <Button className="w-full">Enroll Now</Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+        {/* Other Institutes Section (only in Subdomain Mode) */}
+        {!isGlobalMode && otherEnrollments.length > 0 && (
+            <div className="mb-8 p-8 rounded-3xl glass border border-white/5">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-accent-purple/20 flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-accent-purple" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-text-primary">Your other Schools</h2>
+                        <p className="text-sm text-text-secondary">Quick access to your learning in other institutes</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {Array.from(new Set(otherEnrollments.map(e => e.course.tenant.id))).map(tId => {
+                        const tenant = otherEnrollments.find(e => e.course.tenant.id === tId)?.course.tenant;
+                        const count = otherEnrollments.filter(e => e.course.tenant.id === tId).length;
+                        return (
+                            <Link key={tId} href={getTenantUrl(tenant?.subdomain || null, '/dashboard')}>
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-accent-purple/30 transition-all flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-text-primary group-hover:text-accent-purple transition-colors">{tenant?.name}</span>
+                                        <span className="text-[10px] text-text-muted">{count} active {count === 1 ? 'course' : 'courses'}</span>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent-purple" />
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
             </div>
-          ) : (
-            <EmptyState
-              icon={Search}
-              title="No new courses"
-              description="You've enrolled in all currently available courses or there are no new courses at the moment."
-              className="py-16 bg-white/[0.02]"
-            />
-          )}
-        </div>
+        )}
+
+        {!isGlobalMode && (
+            <div className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-text-primary">Available Courses at {currentInstitute?.name}</h2>
+                <Link href="/courses">
+                  <Button variant="outline">View All</Button>
+                </Link>
+              </div>
+              {availableCourses.filter(c => !enrollments.some(e => e.courseId === c.id)).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availableCourses
+                    .filter(c => !enrollments.some(e => e.courseId === c.id))
+                    .slice(0, 3)
+                    .map((course) => (
+                      <Card key={course.id} variant="elevated" interactive>
+                        <CardHeader>
+                          <CardTitle className="line-clamp-2">{course.title}</CardTitle>
+                          <CardDescription>
+                            by {course.instructor.name} • {course._count.enrollments} students
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-text-secondary text-sm mb-4 line-clamp-2">
+                            {course.description || 'No description available'}
+                          </p>
+                          <Link href={`/courses/${course.id}`}>
+                            <Button className="w-full">Enroll Now</Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No new courses"
+                  description="You've enrolled in all currently available courses or there are no new courses at the moment."
+                  className="py-16 bg-white/[0.02]"
+                />
+              )}
+            </div>
+        )}
         {/* Achievements Section */}
         <div className="mt-12">
           <div className="flex items-center gap-2 mb-6">

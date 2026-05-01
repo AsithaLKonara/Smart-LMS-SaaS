@@ -1,7 +1,23 @@
-
 import { RoleType } from "@prisma/client";
 import { requireAuth } from "./session";
 import { prisma } from "@/lib/db/prisma";
+import { headers } from "next/headers";
+
+/**
+ * Extracts the tenant subdomain from the current request host.
+ * Returns null if on the root domain.
+ */
+export async function getTenantFromHost() {
+    const host = (await headers()).get('host') || '';
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    
+    if (host === rootDomain || host.endsWith(`.${rootDomain}`)) {
+        const subdomain = host.replace(`.${rootDomain}`, '');
+        return subdomain === host ? null : subdomain;
+    }
+    
+    return null;
+}
 
 /**
  * Ensures user is authenticated and returns user with tenantId
