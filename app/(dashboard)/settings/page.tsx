@@ -6,9 +6,17 @@ import { BrandingSettings } from '@/components/features/settings/BrandingSetting
 import { MarketplaceSettings } from '@/components/features/settings/MarketplaceSettings';
 import { Container } from '@/components/layout/Container';
 
+import { can, AuthUser } from '@/lib/auth/guard';
+import { PERMISSIONS } from '@/constants/permissions';
+
 export default async function OrgSettingsPage() {
     const session = await auth();
     if (!session?.user) redirect('/login');
+
+    const user = session.user as AuthUser;
+    if (!can(user, PERMISSIONS.TENANT_MANAGE)) {
+        return redirect('/dashboard');
+    }
 
     const tenant = await prisma.tenant.findUnique({
         where: { id: session.user.tenantId }

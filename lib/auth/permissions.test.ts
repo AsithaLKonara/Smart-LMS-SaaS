@@ -31,8 +31,8 @@ describe('rbac permission matrix', () => {
   it('allows messaging and AI for students where intended', () => {
     expect(hasPermission(student, PERMISSIONS.MESSAGE_DIRECT)).toBe(true);
     expect(hasPermission(student, PERMISSIONS.MESSAGE_BROADCAST)).toBe(false);
-    expect(hasPermission(student, PERMISSIONS.AI_USE)).toBe(true);
-    expect(hasPermission(student, PERMISSIONS.AI_ADMIN)).toBe(false);
+    expect(hasPermission(student, PERMISSIONS.AI_CHAT)).toBe(true);
+    expect(hasPermission(student, PERMISSIONS.AI_CONFIGURE)).toBe(false);
   });
 
   it('grants grade override only to elevated roles', () => {

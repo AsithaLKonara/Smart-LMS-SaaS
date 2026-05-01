@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 import { rateLimit } from '@/lib/rate-limit';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/lib/auth/config.base';
 
-export async function middleware(request: NextRequest) {
+const { auth } = NextAuth(authConfig);
+
+export default auth(async function middleware(request) {
   const path = request.nextUrl.pathname;
+  const session = request.auth;
+  const token = session?.user;
+
+  console.log(`Middleware Path: ${path}, Session present: ${!!session}, User: ${token?.email || 'none'}`);
 
   // Apply rate limiting to API routes
   if (path.startsWith('/api') && !path.startsWith('/api/auth')) {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    const identifier = (await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET 
-    }))?.email || ip;
+    const identifier = token?.email || ip;
     const result = await rateLimit(identifier, 100); // 100 requests per minute
 
     if (!result.success) {
@@ -26,38 +30,40 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-
-
   // Public routes - allow access
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/partners'];
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/partners', '/saaslanding'];
   if (publicRoutes.includes(path) || path.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
   // Protected routes - require authentication
-  if (!token) {
+  if (!session) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', path);
     return NextResponse.redirect(loginUrl);
   }
 
   // Role-based access control
-  const role = token.role as string;
+  const role = token?.role as string;
 
   // Super admin can access everything
   if (role === 'SUPER_ADMIN') {
     return NextResponse.next();
   }
 
-  const isAdminLike = role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'SUPER_ADMIN';
+  const isPlatformAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN';
+  const isTenantAdmin = role === 'TENANT_ADMIN';
+  const isAdminLike = isPlatformAdmin || isTenantAdmin;
   const isInstructorLike = role === 'INSTRUCTOR' || isAdminLike;
 
-  // Tenant-admin pages
+  // Platform Admin only pages
+  if (path.startsWith('/admin/tenants')) {
+    if (!isPlatformAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  }
+
+  // Tenant-admin and Platform-admin pages
   if (
     path.startsWith('/admin') ||
     path.startsWith('/billing') ||
@@ -89,23 +95,12 @@ export async function middleware(request: NextRequest) {
   if (path.startsWith('/api/assets') && !isInstructorLike && role !== 'STUDENT') {
     return new NextResponse('Forbidden', { status: 403 });
   }
-  if (path.startsWith('/api/messaging') && !token.sub) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth.js routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm)$).*)',
   ],
 };

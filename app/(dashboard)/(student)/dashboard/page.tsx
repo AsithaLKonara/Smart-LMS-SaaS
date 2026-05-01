@@ -33,6 +33,13 @@ export default async function StudentDashboardPage() {
     redirect('/login');
   }
 
+  const role = session.user.role;
+  // All authenticated users can access the student dashboard for now, 
+  // but we ensure they have a role.
+  if (!role) {
+    redirect('/login');
+  }
+
   const userId = session.user.id;
   const tenantId = session.user.tenantId;
 

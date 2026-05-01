@@ -164,12 +164,20 @@ export async function getInstructorChartData(instructorId: string) {
 export async function getAdminStats(tenantId?: string) {
     if (tenantId) {
         // Tenant-level admin view
-        const stats = await getTenantStats(tenantId);
+        const [stats, revenueResult] = await Promise.all([
+            getTenantStats(tenantId),
+            prisma.invoice.aggregate({
+                where: { tenantId, status: 'paid' },
+                _sum: { amountCents: true }
+            })
+        ]);
+        
         return {
-            totalTenants: 1,
+            totalTenants: 1, // Current tenant
             totalUsers: stats.userCount,
-            totalRevenue: 0, // Need to implement revenue aggregation
-            totalEnrollments: stats.enrollmentCount
+            totalRevenue: (revenueResult._sum.amountCents || 0) / 100,
+            totalEnrollments: stats.enrollmentCount,
+            isTenantScope: true
         };
     }
 
@@ -188,6 +196,7 @@ export async function getAdminStats(tenantId?: string) {
         totalTenants: tenants,
         totalUsers: users,
         totalRevenue: (revenue._sum.amountCents || 0) / 100,
-        totalEnrollments: enrollments
+        totalEnrollments: enrollments,
+        isTenantScope: false
     };
 }

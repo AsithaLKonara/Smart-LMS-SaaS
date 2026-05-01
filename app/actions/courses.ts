@@ -8,9 +8,23 @@ import { transitionCourseStatus, assertCourseStructuralEditable, assertLessonUpd
 import { assertTenantOperational, assertCourseLimit } from "@/lib/billing/seats";
 import { logActivity } from "@/lib/enterprise/audit";
 
+import { can, hasPermission, AuthUser } from "@/lib/auth/guard";
+import { PERMISSIONS } from "@/constants/permissions";
+
 export async function createCourse(data: { title: string }) {
     try {
-        const { userId, tenantId } = await getSessionContext();
+        const session = await getSessionContext();
+        const user: AuthUser = { 
+            id: session.userId, 
+            role: session.role, 
+            tenantId: session.tenantId 
+        };
+
+        if (!hasPermission(user, PERMISSIONS.COURSE_CREATE)) {
+            throw new Error("Forbidden: You do not have permission to create courses");
+        }
+
+        const { userId, tenantId } = session;
 
         const op = await assertTenantOperational(tenantId);
         if (!op.ok) {
@@ -46,15 +60,26 @@ export async function updateCourse(
     values: Partial<Course>
 ) {
     try {
-        const { userId, tenantId } = await getSessionContext();
+        const session = await getSessionContext();
+        const user: AuthUser = { 
+            id: session.userId, 
+            role: session.role, 
+            tenantId: session.tenantId 
+        };
+        const { userId, tenantId } = session;
 
         const existing = await prisma.course.findFirst({
-            where: { id: courseId, instructorId: userId, tenantId },
-            select: { status: true, tenantId: true },
+            where: { id: courseId },
         });
+
         if (!existing) {
-            throw new Error("Unauthorized");
+            throw new Error("Not found");
         }
+
+        if (!can(user, PERMISSIONS.COURSE_EDIT, existing)) {
+            throw new Error("Forbidden: You do not have permission to edit this course");
+        }
+
         if (existing.status === "ARCHIVED") {
             throw new Error("Course is archived");
         }
@@ -83,21 +108,27 @@ export async function updateCourse(
 
 export async function publishCourse(courseId: string) {
     try {
-        const { userId, tenantId } = await getSessionContext();
+        const session = await getSessionContext();
+        const user: AuthUser = { 
+            id: session.userId, 
+            role: session.role, 
+            tenantId: session.tenantId 
+        };
+        const { userId, tenantId } = session;
 
         const course = await prisma.course.findFirst({
-            where: {
-                id: courseId,
-                instructorId: userId,
-                tenantId,
-            },
+            where: { id: courseId },
         });
 
         if (!course) {
             throw new Error("Not found");
         }
 
-        const updatedCourse = await transitionCourseStatus(courseId, tenantId, userId, "PUBLISHED");
+        if (!can(user, PERMISSIONS.COURSE_PUBLISH, course)) {
+            throw new Error("Forbidden: You do not have permission to publish this course");
+        }
+
+        const updatedCourse = await transitionCourseStatus(courseId, course.tenantId, user.id, "PUBLISHED");
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return updatedCourse;
@@ -109,17 +140,27 @@ export async function publishCourse(courseId: string) {
 
 export async function unpublishCourse(courseId: string) {
     try {
-        const { userId, tenantId } = await getSessionContext();
+        const session = await getSessionContext();
+        const user: AuthUser = { 
+            id: session.userId, 
+            role: session.role, 
+            tenantId: session.tenantId 
+        };
+        const { userId, tenantId } = session;
 
         const course = await prisma.course.findFirst({
-            where: { id: courseId, instructorId: userId, tenantId },
+            where: { id: courseId },
         });
 
         if (!course) {
             throw new Error("Not found");
         }
 
-        const updated = await transitionCourseStatus(courseId, tenantId, userId, "DRAFT");
+        if (!can(user, PERMISSIONS.COURSE_PUBLISH, course)) {
+            throw new Error("Forbidden: You do not have permission to modify this course");
+        }
+
+        const updated = await transitionCourseStatus(courseId, course.tenantId, user.id, "DRAFT");
 
         revalidatePath(`/instructor/courses/${courseId}`);
         return updated;

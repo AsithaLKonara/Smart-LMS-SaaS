@@ -29,7 +29,8 @@ export default async function AdminDashboardPage() {
         return redirect("/dashboard");
     }
 
-    const stats = await getAdminStats(role === 'SUPER_ADMIN' ? undefined : session.user.tenantId);
+    const isPlatformAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN';
+    const stats = await getAdminStats(isPlatformAdmin ? undefined : session.user.tenantId);
 
     return (
         <div className="flex flex-col gap-10">
@@ -37,10 +38,12 @@ export default async function AdminDashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-heading tracking-tight mb-2">
-                        System <TextGradient>Command Center</TextGradient>
+                        {stats.isTenantScope ? 'Institute' : 'System'} <TextGradient>Command Center</TextGradient>
                     </h1>
                     <p className="text-text-secondary text-lg">
-                        Full visibility across the entire SaaS ecosystem.
+                        {stats.isTenantScope 
+                            ? 'Complete oversight of your organization.' 
+                            : 'Full visibility across the entire SaaS ecosystem.'}
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -53,27 +56,27 @@ export default async function AdminDashboardPage() {
 
             <KPIStrip items={[
                 {
-                    label: 'Total Tenants',
-                    value: stats.totalTenants,
+                    label: stats.isTenantScope ? 'Tenant Status' : 'Total Tenants',
+                    value: stats.isTenantScope ? 'Active' : stats.totalTenants,
                     icon: <Building2 className="w-6 h-6" />,
                     color: 'cyan',
-                    change: { value: '+3 new', trend: 'up' }
+                    change: stats.isTenantScope ? undefined : { value: '+3 new', trend: 'up' }
                 },
                 {
-                    label: 'Global Users',
+                    label: stats.isTenantScope ? 'Students' : 'Global Users',
                     value: stats.totalUsers.toLocaleString(),
                     icon: <Users className="w-6 h-6" />,
                     color: 'purple',
                     change: { value: '+450', trend: 'up' }
                 },
                 {
-                    label: 'System Revenue',
+                    label: stats.isTenantScope ? 'Institute Revenue' : 'System Revenue',
                     value: `$${stats.totalRevenue.toLocaleString()}`,
                     icon: <DollarSign className="w-6 h-6" />,
                     color: 'orange'
                 },
                 {
-                    label: 'Global enrollments',
+                    label: stats.isTenantScope ? 'Active Enrollments' : 'Global Enrollments',
                     value: stats.totalEnrollments.toLocaleString(),
                     icon: <GraduationCap className="w-6 h-6" />,
                     color: 'green'

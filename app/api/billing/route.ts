@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const g = await guardPermission(PERMISSIONS.BILLING_VIEW);
+  const g = await guardPermission(PERMISSIONS.BILLING_MANAGE);
   if (!g.ok) return g.response;
 
   try {

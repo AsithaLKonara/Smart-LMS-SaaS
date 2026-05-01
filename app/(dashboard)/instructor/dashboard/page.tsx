@@ -22,6 +22,11 @@ export default async function InstructorDashboardPage() {
         return redirect("/");
     }
 
+    const role = session.user.role;
+    if (role !== "INSTRUCTOR" && role !== "ADMIN" && role !== "TENANT_ADMIN" && role !== "SUPER_ADMIN") {
+        return redirect("/dashboard");
+    }
+
     const { totalCourses, totalStudents, totalRevenue, averageRating } = await getInstructorStats(userId);
     const rawChartData = await getInstructorChartData(userId);
     

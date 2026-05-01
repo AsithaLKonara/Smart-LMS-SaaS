@@ -55,8 +55,17 @@ const getNavItems = (role?: RoleType): NavItem[] => {
   }
 
   if (role === 'ADMIN' || role === 'TENANT_ADMIN' || role === 'SUPER_ADMIN') {
+    const isPlatformAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN';
+    
     return [
-      { href: '/admin/dashboard', label: 'Site Admin', icon: Shield },
+      { 
+        href: '/admin/dashboard', 
+        label: isPlatformAdmin ? 'Site Admin' : 'Institute Home', 
+        icon: LayoutDashboard 
+      },
+      ...(isPlatformAdmin ? [
+        { href: '/admin/tenants', label: 'Tenants', icon: Shield },
+      ] : []),
       { href: '/admin/audit', label: 'Audit Logs', icon: Shield },
       { href: '/admin/users', label: 'Users', icon: Users },
       { href: '/cohorts', label: 'Cohorts', icon: Users },

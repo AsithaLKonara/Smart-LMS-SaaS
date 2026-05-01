@@ -69,6 +69,24 @@ export async function getUsersByTenant(tenantId: string, role?: RoleType) {
 }
 
 /**
+ * Get all users across all tenants (Super-Admin only)
+ */
+export async function getAllUsers() {
+  return prisma.user.findMany({
+    include: {
+      tenant: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
+
+/**
  * Create a new user
  */
 export async function createUser(data: {

@@ -11,7 +11,9 @@ export default async function AuditLogsPage() {
     if (!session?.user) redirect("/login");
 
     const role = session.user.role;
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") redirect("/dashboard");
+    if (role !== "ADMIN" && role !== "SUPER_ADMIN" && role !== "TENANT_ADMIN") {
+        redirect("/dashboard");
+    }
 
     const logs = await prisma.auditLog.findMany({
         where: role === 'SUPER_ADMIN' ? {} : { tenantId: session.user.tenantId },

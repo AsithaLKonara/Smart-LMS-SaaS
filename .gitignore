@@ -38,6 +38,12 @@ yarn-error.log*
 .env.production.local
 !.env.example
 
+# agent
+artifacts/
+scratch/
+.env.production
+.gemini/
+
 # vercel
 .vercel
 

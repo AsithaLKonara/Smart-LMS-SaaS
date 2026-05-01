@@ -41,6 +41,7 @@ async function main() {
   console.log('Creating Users...');
   const usersData = [
     { email: 'admin@demo.com', name: 'Admin User', role: RoleType.ADMIN, tenantId: tenant1.id },
+    { email: 'tenantadmin@demo.com', name: 'Tenant Manager', role: RoleType.TENANT_ADMIN, tenantId: tenant1.id },
     { email: 'instructor@demo.com', name: 'John Instructor', role: RoleType.INSTRUCTOR, tenantId: tenant1.id },
     { email: 'student1@demo.com', name: 'Jane Student', role: RoleType.STUDENT, tenantId: tenant1.id },
     { email: 'student2@demo.com', name: 'Bob Student', role: RoleType.STUDENT, tenantId: tenant1.id },

@@ -5,6 +5,9 @@ import { prisma } from "@/lib/db/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
+import { can, AuthUser } from "@/lib/auth/guard";
+import { PERMISSIONS } from "@/constants/permissions";
+
 export async function changePassword(data: { current: string; new: string }) {
     try {
         const session = await auth();
@@ -12,16 +15,21 @@ export async function changePassword(data: { current: string; new: string }) {
             throw new Error("Unauthorized");
         }
 
-        const user = await prisma.user.findUnique({
+        const user = session.user as AuthUser;
+        if (!can(user, PERMISSIONS.PROFILE_UPDATE, { id: user.id })) {
+            throw new Error("Forbidden");
+        }
+
+        const dbUser = await prisma.user.findUnique({
             where: { id: session.user.id },
             select: { password: true }
         });
 
-        if (!user || !user.password) {
+        if (!dbUser || !dbUser.password) {
             throw new Error("User not found or password not set");
         }
 
-        const isMatch = await bcrypt.compare(data.current, user.password);
+        const isMatch = await bcrypt.compare(data.current, dbUser.password);
         if (!isMatch) {
             throw new Error("Current password incorrect");
         }
@@ -46,6 +54,11 @@ export async function updateProfile(data: { name?: string; avatar?: string }) {
         const session = await auth();
         if (!session?.user?.id) {
             throw new Error("Unauthorized");
+        }
+
+        const user = session.user as AuthUser;
+        if (!can(user, PERMISSIONS.PROFILE_UPDATE, { id: user.id })) {
+            throw new Error("Forbidden");
         }
 
         await prisma.user.update({

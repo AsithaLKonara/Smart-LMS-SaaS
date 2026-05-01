@@ -1,6 +1,6 @@
 import type { RoleType } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
-import { hasPermission, type User as PermUser } from '@/lib/auth/permissions';
+import { hasPermission, AuthUser as PermUser } from '@/lib/auth/guard';
 import { PERMISSIONS } from '@/constants/permissions';
 import { appLog } from '@/lib/observability/logger';
 
@@ -9,7 +9,7 @@ export function permUser(id: string, role: RoleType, tenantId: string): PermUser
 }
 
 export function requireAiPermission(user: PermUser) {
-  if (!hasPermission(user, PERMISSIONS.AI_USE)) {
+  if (!hasPermission(user, PERMISSIONS.AI_CHAT)) {
     return { ok: false as const, message: 'Forbidden' };
   }
   return { ok: true as const };

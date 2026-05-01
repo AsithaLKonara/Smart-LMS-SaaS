@@ -1,7 +1,8 @@
+
 import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authenticateUser } from './user';
-import type { RoleType } from '@prisma/client';
+import { authConfig } from './config.base';
 
 class SignInError extends CredentialsSignin {
   constructor(message: string, code?: string) {
@@ -12,7 +13,9 @@ class SignInError extends CredentialsSignin {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
+    ...authConfig.providers,
     Credentials({
       name: 'Credentials',
       credentials: {
@@ -49,7 +52,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             avatar: user.avatar || undefined,
           };
         } catch (error: any) {
-          // Re-throw specific errors to be caught in the login form
           if (error.message === 'DATABASE_CONNECTION_ERROR') {
             throw new SignInError('Database connection failed. Please check your configuration.', 'db_connection_error');
           }
@@ -59,42 +61,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (error.message === 'AUTH_METHOD_NOT_SUPPORTED') {
             throw new SignInError('This account uses a different sign-in method.', 'auth_method_not_supported');
           }
-          
-          // Default error
           throw new SignInError('An unexpected error occurred during authentication.', 'unknown_error');
         }
       },
     }),
   ],
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as { role: RoleType }).role;
-        token.tenantId = (user as { tenantId: string }).tenantId;
-        token.avatar = (user as { avatar?: string }).avatar;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as RoleType;
-        session.user.tenantId = token.tenantId as string;
-        session.user.avatar = token.avatar as string | undefined;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: '/login',
-    error: '/login',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
 });
-

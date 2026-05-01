@@ -38,7 +38,7 @@ const links = [
 export function Footer() {
   return (
     <footer className="relative z-10 pt-24 pb-12 overflow-hidden border-t border-white/5 bg-transparent backdrop-blur-2xl">
-      <div className="container px-6 lg:px-12">
+      <div className="container mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           
           {/* Brand Info */}
