@@ -7,6 +7,8 @@ import { TextGradient } from "@/components/ui/TextGradient";
 import { PartnerDirectory } from "@/components/landing/PartnerDirectory";
 import { BackgroundVideo } from "@/components/common/BackgroundVideo";
 
+export const dynamic = "force-dynamic";
+
 export default async function PartnersPage() {
     const partners = await prisma.tenant.findMany({
         where: { isPartner: true },
