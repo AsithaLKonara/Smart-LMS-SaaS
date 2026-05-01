@@ -8,10 +8,10 @@ import { toast } from 'sonner';
 interface Thread {
   id: string;
   title: string | null;
-  scope: string;
+  scope: 'DIRECT' | 'COURSE';
   updatedAt: string | Date;
   lastMessage: string;
-  members: Array<{ user: { name: string; avatar: string | null } }>;
+  members: Array<{ user: { id: string; name: string; avatar: string | null } }>;
 }
 
 interface Message {

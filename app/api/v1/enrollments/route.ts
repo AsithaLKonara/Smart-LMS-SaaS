@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
 async function validateApiKey() {
-    const headerList = headers();
+    const headerList = await headers();
     const apiKey = headerList.get("x-api-key");
 
     if (!apiKey) return null;

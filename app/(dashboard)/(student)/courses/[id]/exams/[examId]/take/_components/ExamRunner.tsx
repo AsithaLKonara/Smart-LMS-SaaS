@@ -63,6 +63,25 @@ export const ExamRunner = ({
         return () => clearInterval(interval);
     }, [saveProgress]);
 
+    const handleSubmit = useCallback(async (autoSubmit = false) => {
+        if (isLoading) return;
+
+        try {
+            setIsLoading(true);
+            await submitExam(courseId, examId, answers);
+            if (autoSubmit) {
+                // Show auto-submit toast
+            }
+            router.refresh(); // Or redirect to result page
+            // Redirect happens via server component re-rendering if logic handles it, or explicit push
+            router.push(`/courses/${courseId}/exams/${examId}/result`);
+        } catch {
+            // error
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isLoading, courseId, examId, answers, router]);
+
     // Timer Logic
     useEffect(() => {
         if (!exam.duration) return;
@@ -108,25 +127,6 @@ export const ExamRunner = ({
             setCurrentQuestionIndex(prev => prev - 1);
         }
     };
-
-    const handleSubmit = useCallback(async (autoSubmit = false) => {
-        if (isLoading) return;
-
-        try {
-            setIsLoading(true);
-            await submitExam(courseId, examId, answers);
-            if (autoSubmit) {
-                // Show auto-submit toast
-            }
-            router.refresh(); // Or redirect to result page
-            // Redirect happens via server component re-rendering if logic handles it, or explicit push
-            router.push(`/courses/${courseId}/exams/${examId}/result`);
-        } catch {
-            // error
-        } finally {
-            setIsLoading(false);
-        }
-    }, [isLoading, courseId, examId, answers, router]);
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);

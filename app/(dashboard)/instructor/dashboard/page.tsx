@@ -23,7 +23,13 @@ export default async function InstructorDashboardPage() {
     }
 
     const { totalCourses, totalStudents, totalRevenue, averageRating } = await getInstructorStats(userId);
-    const chartData = await getInstructorChartData(userId);
+    const rawChartData = await getInstructorChartData(userId);
+    
+    const chartData = rawChartData.map(d => ({
+        name: d.month,
+        revenue: d.revenue,
+        enrollments: d.students
+    }));
 
     return (
         <div className="flex flex-col gap-10">

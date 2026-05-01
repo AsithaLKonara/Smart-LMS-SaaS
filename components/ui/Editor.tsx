@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor as TiptapEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
@@ -30,7 +30,7 @@ interface EditorProps {
     value: string;
 }
 
-const Toolbar = ({ editor }: { editor: Editor | null }) => {
+const Toolbar = ({ editor }: { editor: TiptapEditor | null }) => {
     if (!editor) return null;
 
     return (

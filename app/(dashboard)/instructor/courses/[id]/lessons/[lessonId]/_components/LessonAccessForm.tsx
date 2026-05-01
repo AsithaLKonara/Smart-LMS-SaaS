@@ -22,7 +22,7 @@ interface LessonAccessFormProps {
 }
 
 const formSchema = z.object({
-    isFree: z.boolean().default(false),
+    isFree: z.boolean(),
 });
 
 export const LessonAccessForm = ({

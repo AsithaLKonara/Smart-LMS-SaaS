@@ -10,7 +10,7 @@ export async function logActivity(
     payload?: any
 ) {
     try {
-        const headerList = headers();
+        const headerList = await headers();
         const ipAddress = headerList.get("x-forwarded-for") || "unknown";
         const userAgent = headerList.get("user-agent") || "unknown";
 

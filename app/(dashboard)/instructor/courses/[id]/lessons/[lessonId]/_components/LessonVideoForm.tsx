@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Video, Pencil, Loader2 } from "lucide-react";
+import { VideoProvider } from "@prisma/client";
 import { updateLesson } from "@/app/actions/courses";
 
 import { Button } from "@/components/ui/Button";
@@ -15,7 +16,7 @@ import { VideoPlayer } from "@/components/features/video/VideoPlayer";
 
 interface LessonVideoFormProps {
     initialData: {
-        videoProvider: string;
+        videoProvider: VideoProvider;
         videoExternalId: string | null;
     };
     courseId: string;
@@ -24,7 +25,7 @@ interface LessonVideoFormProps {
 }
 
 const formSchema = z.object({
-    videoProvider: z.string(),
+    videoProvider: z.nativeEnum(VideoProvider),
     videoExternalId: z.string().min(1),
 });
 
@@ -40,7 +41,7 @@ export const LessonVideoForm = ({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            videoProvider: initialData.videoProvider || "YOUTUBE",
+            videoProvider: initialData.videoProvider || VideoProvider.YOUTUBE,
             videoExternalId: initialData.videoExternalId || "",
         },
     });

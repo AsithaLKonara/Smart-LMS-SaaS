@@ -18,7 +18,12 @@ import { cn } from "@/lib/utils/cn";
 
 export default async function AdminDashboardPage() {
     const session = await auth();
-    const role = session?.user?.role;
+    
+    if (!session?.user) {
+        return redirect("/dashboard");
+    }
+
+    const role = session.user.role;
 
     if (role !== "ADMIN" && role !== "TENANT_ADMIN" && role !== "SUPER_ADMIN") {
         return redirect("/dashboard");

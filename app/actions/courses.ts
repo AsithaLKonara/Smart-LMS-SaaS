@@ -362,14 +362,14 @@ export async function updateLesson(
 
         await assertLessonUpdateAllowed(courseId, courseOwner.tenantId, values as Record<string, unknown>);
 
+        const { id: _id, moduleId: _mid, ...data } = values;
+
         const lesson = await prisma.lesson.update({
             where: {
                 id: lessonId,
                 moduleId: moduleId,
             },
-            data: {
-                ...values,
-            },
+            data: data as any,
         });
 
         await logActivity(courseOwner.tenantId, userId, "LESSON_UPDATE", `Lesson:${lessonId}`, values);

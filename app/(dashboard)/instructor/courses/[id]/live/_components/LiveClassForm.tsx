@@ -21,7 +21,7 @@ const formSchema = z.object({
         message: "Valid date is required"
     }),
     duration: z.coerce.number().min(15, { message: "Minimum 15 minutes" }),
-    platform: z.nativeEnum(Platform).default(Platform.ZOOM),
+    platform: z.nativeEnum(Platform),
     meetingUrl: z.string().url({ message: "Valid URL required" }),
 });
 
