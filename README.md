@@ -20,6 +20,21 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Demo Credentials
+
+You can use the following accounts to test the platform's multi-tenant features. All accounts use the password: `Password123!`
+
+### Demo Academy (`demo.localhost:3000`)
+- **Super Admin**: `superadmin@platform.com`
+- **Institute Admin**: `admin@demo.com`
+- **Instructor**: `instructor@demo.com`
+- **Student**: `student1@demo.com`
+
+### Tech Institute (`tech.localhost:3000`)
+- **Instructor**: `instructor@tech.com`
+
+---
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

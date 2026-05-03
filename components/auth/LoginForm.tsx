@@ -232,14 +232,15 @@ export function LoginForm() {
             {[
               { role: 'Student', email: 'student1@demo.com', icon: Users, color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-600/5' },
               { role: 'Instructor', email: 'instructor@demo.com', icon: GraduationCap, color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-600/5' },
-              { role: 'Tenant Admin', email: 'admin@demo.com', icon: ShieldCheck, color: 'text-accent-purple', bg: 'from-purple-500/10 to-purple-600/5' },
-              { role: 'Super Admin', email: 'superadmin@platform.com', icon: Globe, color: 'text-accent-cyan', bg: 'from-cyan-500/10 to-cyan-600/5' },
+              { role: 'Tech Prof', email: 'instructor@tech.com', icon: Globe, color: 'text-accent-purple', bg: 'from-purple-500/10 to-purple-600/5' },
+              { role: 'Admin', email: 'admin@demo.com', icon: ShieldCheck, color: 'text-accent-cyan', bg: 'from-cyan-500/10 to-cyan-600/5' },
+              { role: 'Super Admin', email: 'superadmin@platform.com', icon: ShieldCheck, color: 'text-red-400', bg: 'from-red-500/10 to-red-600/5' },
             ].map((demo) => (
               <button
                 key={demo.role}
                 type="button"
                 onClick={() => setFormData({ ...formData, email: demo.email, password: 'Password123!' })}
-                className={`flex items-center gap-2 p-3 rounded-xl bg-gradient-to-br ${demo.bg} border border-white/5 hover:border-white/20 transition-all group text-left w-full`}
+                className={`flex items-center gap-2 p-3 rounded-xl bg-gradient-to-br ${demo.bg} border border-white/5 hover:border-white/20 transition-all group text-left w-full h-full`}
               >
                 <div className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform flex-shrink-0 ${demo.color}`}>
                   <demo.icon className="w-3.5 h-3.5" />
