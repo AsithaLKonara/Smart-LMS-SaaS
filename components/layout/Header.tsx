@@ -18,8 +18,8 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="#features" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">Features</Link>
-          <Link href="#pricing" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">Pricing</Link>
+          <Link href="/saaslanding#features" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">Features</Link>
+          <Link href="/saaslanding#pricing" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">Pricing</Link>
           <Link href="/institutes" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">Institutes</Link>
           <Link href="/about" className="text-sm font-medium text-text-secondary hover:text-accent-cyan transition-colors">About</Link>
         </nav>
@@ -28,7 +28,7 @@ export function Header() {
           <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-white transition-colors">
             Sign In
           </Link>
-          <Link href="/login">
+          <Link href="/register">
             <Button variant="premium" size="sm" className="shadow-neon-purple hover:shadow-neon-cyan hover:scale-105 transition-all duration-300">
               Get Started
             </Button>
