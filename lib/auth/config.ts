@@ -52,6 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             avatar: user.avatar || undefined,
           };
         } catch (error: any) {
+          console.error('NextAuth authorize error:', error);
           if (error.message === 'DATABASE_CONNECTION_ERROR') {
             throw new SignInError('Database connection failed. Please check your configuration.', 'db_connection_error');
           }

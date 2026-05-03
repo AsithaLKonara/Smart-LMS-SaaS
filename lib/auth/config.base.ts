@@ -5,9 +5,16 @@ import Google from 'next-auth/providers/google';
 import Facebook from 'next-auth/providers/facebook';
 
 const useSecureCookies = process.env.NODE_ENV === 'production';
-const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-// Only set domain in production to avoid issues with localhost subdomains in some browsers
-const cookieDomain = useSecureCookies ? `.${rootDomain}` : undefined;
+const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || '')
+  .replace(/^https?:\/\//, '')
+  .split('/')[0];
+
+// Only set domain in production and if it's not a vercel.app subdomain or localhost
+// This prevents 'Configuration' errors on Vercel preview deployments
+const isVercel = rootDomain.endsWith('vercel.app');
+const cookieDomain = (useSecureCookies && rootDomain && !isVercel && rootDomain !== 'localhost') 
+  ? `.${rootDomain}` 
+  : undefined;
 
 export const authConfig = {
   providers: [

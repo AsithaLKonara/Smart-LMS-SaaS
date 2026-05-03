@@ -48,11 +48,14 @@ export function LoginForm() {
           case 'auth_method_not_supported':
             setError('This account uses a different sign-in method (e.g., Google).');
             break;
+          case 'Configuration':
+            setError('System configuration error (AUTH_SECRET might be missing in production).');
+            break;
           case 'CredentialsSignin':
             setError('Invalid email or password.');
             break;
           default:
-            setError(result.error || 'An unexpected error occurred during sign in');
+            setError(`Error: ${result.error || 'An unexpected error occurred'}. Please check server logs.`);
         }
         setLoading(false);
         return;
