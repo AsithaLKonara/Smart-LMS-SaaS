@@ -9,10 +9,10 @@ const links = [
   {
     title: "Product",
     items: [
-      { name: "Features", href: "#features" },
-      { name: "Integrations", href: "#integrations" },
+      { name: "Features", href: "/saaslanding#features" },
+      { name: "Integrations", href: "/saaslanding#integrations" },
       { name: "Institutes", href: "/institutes" },
-      { name: "Pricing", href: "#pricing" },
+      { name: "Pricing", href: "/saaslanding#pricing" },
       { name: "Changelog", href: "/changelog" }
     ]
   },

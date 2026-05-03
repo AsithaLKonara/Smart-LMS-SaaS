@@ -31,8 +31,8 @@ export default auth(async function middleware(request) {
   }
 
   // Public routes - allow access
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/partners', '/saaslanding'];
-  if (publicRoutes.includes(path) || path.startsWith('/api/auth')) {
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/partners', '/saaslanding', '/about', '/institutes'];
+  if (publicRoutes.includes(path) || path.startsWith('/institutes/') || path.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 

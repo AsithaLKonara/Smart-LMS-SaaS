@@ -24,7 +24,7 @@ const features = [
 
 export function FeaturesGrid() {
     return (
-        <section className="w-full bg-transparent py-16 md:py-[73px] flex flex-col items-center gap-8 md:gap-[33px]">
+        <section id="features" className="w-full bg-transparent py-16 md:py-[73px] flex flex-col items-center gap-8 md:gap-[33px]">
             <div className="max-w-[1280px] mx-auto px-6 md:px-[60px] lg:px-[120px] w-full flex flex-col items-center gap-8 md:gap-[33px]">
                 <h2 className="text-white font-bold font-heading text-2xl md:text-[32px] text-center tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
                     Premium Learning Experience
